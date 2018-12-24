@@ -5,13 +5,13 @@ import numpy as np
 
 @pytest.fixture
 def hmmexample():
-    return hmmforward(2,4,1,10)
+    return hmmforward(2,4,1,50)
 
 def test_setting(hmmexample):
     assert hmmexample.numofstates == 2
     assert hmmexample.numofobsercases == 4
     assert hmmexample.piequality == 1
-    assert hmmexample.obserlength==10
+    assert hmmexample.obserlength==50
 def test_pie(hmmexample):
     assert len(hmmexample.pie) == 2
     assert np.sum(hmmexample.pie) - 1 < 0.01

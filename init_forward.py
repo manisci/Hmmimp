@@ -34,7 +34,7 @@ class hmmforward(object):
         for i in range(self.numofstates):
             (self.transitionmtrx)[i,:] = np.random.dirichlet(np.ones(self.numofstates) / self.transitionmtrxpriors[i],size=1)[0]
     def generateobservations(self):
-        self.observations = np.empty((self.obserlength,1))
+        self.observations = np.empty((self.obserlength,1),dtype = numpy.int8)
         self.seqofstates = np.empty((self.obserlength,1))
         elements = range(self.numofstates)
         initialstate = np.random.choice(elements, 1, p=self.pie)[0]
@@ -49,26 +49,27 @@ class hmmforward(object):
             (self.observations)[i] = (np.random.choice(elements, 1, p=list(self.obsmtrx[nextstate,:])))[0]
             (self.seqofstates)[i] = (nextstate)
             prevstate = nextstate
+        
 
-# just testing
-def main():
-    exmodel = hmmforward(5,10,1,80)
-    print "observations"
-    print exmodel.observations
-    print "pi"
-    print exmodel.pie
-    print "transition matrix"
-    print exmodel.transitionmtrx
-    print "observation matrix"
-    print exmodel.obsmtrx
-    print "trans mtrx priors"
-    print exmodel.transitionmtrxpriors
-    print "obsrvationmtrx priors"
-    print exmodel.obsmtrxpriors
-    print "sequence of states"
-    print exmodel.seqofstates
+# # just testing
+# def main():
+#     exmodel = hmmforward(5,10,1,80)
+#     print "observations"
+#     print exmodel.observations
+#     print "pi"
+#     print exmodel.pie
+#     print "transition matrix"
+#     print exmodel.transitionmtrx
+#     print "observation matrix"
+#     print exmodel.obsmtrx
+#     print "trans mtrx priors"
+#     print exmodel.transitionmtrxpriors
+#     print "obsrvationmtrx priors"
+#     print exmodel.obsmtrxpriors
+#     print "sequence of states"
+#     print exmodel.seqofstates
     
-main()
+# main()
 
             
         
