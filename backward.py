@@ -20,14 +20,12 @@ def backward(transmtrx,obsmtrx,pie,observations):
         betas[t-1,:] = np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:]))) 
     return (betas)
 
-
-
-def main():
-    exmodel = hmmforward(5,10,1,10)
-    observations = exmodel.observations
-    pie = exmodel.pie
-    transmtrx = exmodel.transitionmtrx
-    obsmtrx = exmodel.obsmtrx
-    seqofstates = exmodel.seqofstates
-    betas = backward(transmtrx,obsmtrx,pie,observations)
-main()
+# def main():
+#     exmodel = hmmforward(5,10,1,10)
+#     observations = exmodel.observations
+#     pie = exmodel.pie
+#     transmtrx = exmodel.transitionmtrx
+#     obsmtrx = exmodel.obsmtrx
+#     seqofstates = exmodel.seqofstates
+#     betas = backward(transmtrx,obsmtrx,pie,observations)
+# main()

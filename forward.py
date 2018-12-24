@@ -1,6 +1,7 @@
 import numpy as np,numpy.random
 from init_forward import hmmforward
 from scipy import stats
+from datashape.coretypes import float32
 
 def normalize(u):
     Z = np.sum(u)
@@ -12,24 +13,25 @@ def foward(transmtrx,obsmtrx,pie,observations):
     # initialization
     numstates = np.shape(transmtrx)[0]
     timelength = np.shape(observations)[0]
-    Zis = np.empty((timelength,1))
+    Zis =  np.zeros((timelength,1))
     most_likely_seq = np.empty((timelength,1))
     alphas = np.empty((timelength,numstates))
     phi0 = obsmtrx[:,int(observations[0])]
     (alphas[0,:],Zis[0]) = normalize(np.multiply(phi0,pie)) 
     most_likely_seq[0] = np.argmax(alphas[0,:])
-    print np.shape(pie)
     for t in range(1,timelength):
         phi_t = obsmtrx[:,int(observations[t])]
-        (alphas[t,:],Zis[t]) = normalize(np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:])))) 
+        (alphas[t,:],Zis[t]) = normalize(np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:]))))
         most_likely_seq[t] = np.argmax(alphas[t,:])
-    log_prob_most_likely_seq = np.sum(np.log(Zis))
+        if Zis[t] == 0 :
+            Zis[t] = 2.22044604925e-16
+    log_prob_most_likely_seq = np.sum(np.log(Zis) + 2.22044604925e-16 )
     return (alphas,log_prob_most_likely_seq,most_likely_seq)
 
 
 
 def main():
-    exmodel = hmmforward(5,10,1,5000)
+    exmodel = hmmforward(5,10,1,500)
     observations = exmodel.observations
     pie = exmodel.pie
     transmtrx = exmodel.transitionmtrx
