@@ -1,46 +1,57 @@
+import pytest
 import numpy as np,numpy.random
 from init_forward import hmmforward
 from scipy import stats
 from forward import forward
 from backward import backward
 from forward_backward import forward_backward
+from scipy import stats
 
 def normalize(u):
     Z = np.sum(u)
     if Z==0:
-        v = u / (Z+ 2.22044604925e-16)
+        v = u / (Z + 2.22044604925e-16)
     else:
         v = u / Z
     return (v,Z)
 
-def viterbi(transmtrx,obsmtrx,pie,observations):
+@pytest.mark.parametrize("nums,numobscase,piequality,numobservs",[(5,10,2,500),(2,4,1,500),(8,20,1,1000),(4,16,1,50)])
+
+def test_viterbi(nums,numobscase,piequality,numobservs):
     ''' you can convert the observations and obsmtrx all together into one matrix
     called soft evidence which is a K * T matrix by using the corresponding
     distribution across all the states for each time point and use that instead'''
     # initialization
-    numstates = np.shape(transmtrx)[0]
-    timelength = np.shape(observations)[0]
+    hmmexample = hmmforward(nums,numobscase,piequality,numobservs)
+    numstates = np.shape(hmmexample.transitionmtrx)[0]
+    timelength = np.shape(hmmexample.observations)[0]
     deltas = np.empty((timelength,numstates))
     optzis = np.empty((timelength,1))
     As = np.empty((timelength,numstates))
-    (deltas[0,:] ,Z) = normalize((np.multiply(obsmtrx[:,int(observations[0])],pie)))
-    otherzero = np.argmax(deltas[0,:])
+    (deltas[0,:] ,Z) = normalize((np.multiply(hmmexample.obsmtrx[:,int(hmmexample.observations[0])],hmmexample.pie)))
     for t in range(1,timelength):
         # set A here
         for j in range(numstates):
             # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-            (normed,Z) = normalize(deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])])
+            (normed,Z) = normalize(deltas[t-1,:] * hmmexample.transitionmtrx[:,j] * hmmexample.obsmtrx[j,int(hmmexample.observations[t])])
             # print normed
             As[t,j] = int(np.argmax(normed))
             cands = np.empty((numstates,1))
             for i in range(numstates):
-                cands[i] = deltas[t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[t])])
+                cands[i] = deltas[t-1,i] *(hmmexample.transitionmtrx[i,j]) *(hmmexample.obsmtrx[j,int(hmmexample.observations[t])])
             deltas[t,j] = max(cands)
         (deltas[t,:],Z) = normalize(deltas[t,:])
     optzis[timelength-1] = int(np.argmax(deltas[timelength-1,:]))
     for k in range(timelength-2,-1,-1):
         optzis[k] = As[k+1,int(optzis[k+1])]
-    return optzis
+    # assert stats.mode(hmmexample.seqofstates).mode == stats.mode(optzis).mode
+    # assert stats.mode(optzis).mode == np.argmax(hmmexample.pie)
+    assert abs(np.sum(deltas[1,:]) - 1 )< 0.01
+    assert abs(np.sum(normed) -1) < 0.01
+    assert np.sum(np.isinf(deltas)) == 0
+    assert np.sum(np.isinf(cands)) == 0
+    assert np.sum(np.isinf(As)) == 0
+
 
 # def main():
 #     exmodel = hmmforward(5,10,500,500)

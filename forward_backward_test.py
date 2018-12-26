@@ -2,7 +2,7 @@ import pytest
 import numpy as np,numpy.random
 from init_forward import hmmforward
 from scipy import stats
-from forward import foward
+from forward import forward
 from backward import backward
 from datashape.coretypes import float32
 
@@ -24,7 +24,7 @@ def test_foward_backward(nums,numobscase,piequality,numobservs):
     hmmexample = hmmforward(nums,numobscase,piequality,numobservs)
     timelength = np.shape(hmmexample.observations)[0]
     gammas = np.empty((timelength,nums))
-    (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq) = foward(hmmexample.transitionmtrx,hmmexample.obsmtrx,hmmexample.pie,hmmexample.observations)
+    (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq) = forward(hmmexample.transitionmtrx,hmmexample.obsmtrx,hmmexample.pie,hmmexample.observations)
     betas = backward(hmmexample.transitionmtrx,hmmexample.obsmtrx,hmmexample.pie,hmmexample.observations)
     Zis = np.zeros((timelength,1))
     most_likely_seq = np.empty((timelength,1))
