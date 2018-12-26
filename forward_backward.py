@@ -1,25 +1,28 @@
 import numpy as np,numpy.random
 from init_forward import hmmforward
 from scipy import stats
-from forward import foward
+from forward import forward
 from backward import backward
-from datashape.coretypes import float32
 
 def normalize(u):
     Z = np.sum(u)
-    v = u / Z
+    if Z==0:
+        v = u / (Z+ 2.22044604925e-16)
+    else:
+        v = u / Z
     return (v,Z)
 
 
-def foward_backward(transmtrx,obsmtrx,pie,observations):
+def forward_backward(transmtrx,obsmtrx,pie,observations):
     # initialization
     numstates = np.shape(transmtrx)[0]
     timelength = np.shape(observations)[0]
     gammas = np.empty((timelength,numstates))
-    (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq) = foward(transmtrx,obsmtrx,pie,observations)
+    (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq) = forward(transmtrx,obsmtrx,pie,observations)
     betas = backward(transmtrx,obsmtrx,pie,observations)
     Zis = np.zeros((timelength,1))
     most_likely_seq = np.empty((timelength,1))
+
     for t in range(timelength):
         (gammas[t,:],Zis[t]) =  normalize(np.multiply(alphas[t,:],betas[t,:]))
         if Zis[t] == 0 :
@@ -31,13 +34,13 @@ def foward_backward(transmtrx,obsmtrx,pie,observations):
 
 
 def main():
-    exmodel = hmmforward(5,10,1,20)
+    exmodel = hmmforward(5,10,2,500)
     observations = exmodel.observations
     pie = exmodel.pie
     transmtrx = exmodel.transitionmtrx
     obsmtrx = exmodel.obsmtrx
     seqofstates = exmodel.seqofstates
-    (gammas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq) = foward_backward(transmtrx,obsmtrx,pie,observations)
+    (gammas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq) = forward_backward(transmtrx,obsmtrx,pie,observations)
     print "forward_backward acc"
     print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
     print "forward acc"

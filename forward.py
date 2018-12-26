@@ -1,7 +1,6 @@
 import numpy as np,numpy.random
 from init_forward import hmmforward
 from scipy import stats
-from datashape.coretypes import float32
 
 def normalize(u):
     Z = np.sum(u)
@@ -9,7 +8,7 @@ def normalize(u):
     return (v,Z)
 
 
-def foward(transmtrx,obsmtrx,pie,observations):
+def forward(transmtrx,obsmtrx,pie,observations):
     # initialization
     numstates = np.shape(transmtrx)[0]
     timelength = np.shape(observations)[0]
@@ -37,7 +36,7 @@ def main():
     transmtrx = exmodel.transitionmtrx
     obsmtrx = exmodel.obsmtrx
     seqofstates = exmodel.seqofstates
-    (alphas,log_prob_most_likely_seq,most_likely_seq) = foward(transmtrx,obsmtrx,pie,observations)
+    (alphas,log_prob_most_likely_seq,most_likely_seq) = forward(transmtrx,obsmtrx,pie,observations)
     # print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
     # print stats.mode(seqofstates)
     # print stats.mode(most_likely_seq)
