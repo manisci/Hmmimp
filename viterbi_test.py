@@ -31,7 +31,7 @@ def test_viterbi(nums,numobscase,piequality,numobservs):
     (deltas[0,:] ,Z) = normalize((np.multiply(hmmexample.obsmtrx[:,int(hmmexample.observations[0])],hmmexample.pie)))
     for t in range(1,timelength):
         # set A here
-        for j in range(numstates):
+        for j in range(numstates): 
             # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
             (normed,Z) = normalize(deltas[t-1,:] * hmmexample.transitionmtrx[:,j] * hmmexample.obsmtrx[j,int(hmmexample.observations[t])])
             # print normed
