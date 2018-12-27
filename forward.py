@@ -29,15 +29,15 @@ def forward(transmtrx,obsmtrx,pie,observations):
 
 
 
-def main():
-    exmodel = hmmforward(5,10,1,500)
-    observations = exmodel.observations
-    pie = exmodel.pie
-    transmtrx = exmodel.transitionmtrx
-    obsmtrx = exmodel.obsmtrx
-    seqofstates = exmodel.seqofstates
-    (alphas,log_prob_most_likely_seq,most_likely_seq) = forward(transmtrx,obsmtrx,pie,observations)
-    # print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
-    # print stats.mode(seqofstates)
-    # print stats.mode(most_likely_seq)
-main()
+# def main():
+#     exmodel = hmmforward(5,10,1,500)
+#     observations = exmodel.observations
+#     pie = exmodel.pie
+#     transmtrx = exmodel.transitionmtrx
+#     obsmtrx = exmodel.obsmtrx
+#     seqofstates = exmodel.seqofstates
+#     (alphas,log_prob_most_likely_seq,most_likely_seq) = forward(transmtrx,obsmtrx,pie,observations)
+#     # print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
+#     # print stats.mode(seqofstates)
+#     # print stats.mode(most_likely_seq)
+# main()

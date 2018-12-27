@@ -59,7 +59,11 @@ def main():
     print "forward prob"
     print forward_log_prob_most_likely_seq
     print "forward_backward is more certain at each time point"
-
+    numwins = 0
+    for i in range(len(observations)):
+        if max(alphas[i,:]) <= max(gammas[i,:]):
+            numwins +=1
+    print numwins / float(len(observations))
     mlpath = viterbi(transmtrx,obsmtrx,pie,observations)
     # print mlpath
     print "viterbi similar to reality"
