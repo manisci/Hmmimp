@@ -4,20 +4,25 @@ from scipy import stats
 
 def normalize(u):
     Z = np.sum(u)
-    v = u / Z
+    if Z==0:
+        return (u,1.0)
+    else:
+        v = u / Z
     return (v,Z)
-
 
 def backward(transmtrx,obsmtrx,pie,observations):
     # initialization
     numstates = np.shape(transmtrx)[0]
     timelength = np.shape(observations)[0]
-    betas = np.empty((timelength,numstates))
-    betas[timelength-1,:] = np.ones((1,numstates))
+    betas = np.zeros((timelength,numstates))
+    (betas[timelength-1,:], dumm) = normalize(np.ones((1,numstates)))
+    # (betas[timelength-1,:],dummy) = normalize(betas[timelength-1,:])
     # print betas[timelength-1,:]
     for t in range(timelength-1,0,-1):
         phi_t = obsmtrx[:,int(observations[t])]
-        betas[t-1,:] = np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:]))) 
+        (betas[t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))) 
+        # (betas[t-1,:],dummy) = normalize(betas[t-1,:])
+    (betas[0,:], doosh) = normalize(betas[0,:])
     return (betas)
 
 # def main():

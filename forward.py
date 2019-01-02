@@ -4,6 +4,8 @@ from scipy import stats
 
 def normalize(u):
     Z = np.sum(u)
+    if Z == 0:
+        return (u,1.0)
     v = u / Z
     return (v,Z)
 
@@ -22,10 +24,8 @@ def forward(transmtrx,obsmtrx,pie,observations):
         phi_t = obsmtrx[:,int(observations[t])]
         (alphas[t,:],Zis[t]) = normalize(np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:]))))
         most_likely_seq[t] = np.argmax(alphas[t,:])
-        if Zis[t] == 0 :
-            Zis[t] = 2.22044604925e-16
     log_prob_most_likely_seq = np.sum(np.log(Zis) + 2.22044604925e-16 )
-    return (alphas,log_prob_most_likely_seq,most_likely_seq)
+    return (alphas,log_prob_most_likely_seq,most_likely_seq,Zis)
 
 
 
@@ -36,7 +36,7 @@ def forward(transmtrx,obsmtrx,pie,observations):
 #     transmtrx = exmodel.transitionmtrx
 #     obsmtrx = exmodel.obsmtrx
 #     seqofstates = exmodel.seqofstates
-#     (alphas,log_prob_most_likely_seq,most_likely_seq) = forward(transmtrx,obsmtrx,pie,observations)
+#     (alphas,log_prob_most_likely_seq,most_likely_seq,,Zis) = forward(transmtrx,obsmtrx,pie,observations)
 #     # print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
 #     # print stats.mode(seqofstates)
 #     # print stats.mode(most_likely_seq)

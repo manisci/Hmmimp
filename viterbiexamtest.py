@@ -49,7 +49,7 @@ def main():
     pie = np.array([1,0,0])
     transmtrx = np.array([[0,0.5,0.5],[0,0.9,0.1],[0,0,1]])
     obsmtrx = np.array([[0,0.5,0.5],[0,0.9,0.1],[0,0.1,0.9]])
-    (gammas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq) = forward_backward(transmtrx,obsmtrx,pie,observations)
+    (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis) = forward_backward(transmtrx,obsmtrx,pie,observations)
     print "forward_backward "
     print most_likely_seq
     print "forward acc"

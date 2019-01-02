@@ -8,7 +8,7 @@ from forward_backward import forward_backward
 def normalize(u):
     Z = np.sum(u)
     if Z==0:
-        v = u / (Z+ 2.22044604925e-16)
+        return (u,1.0)
     else:
         v = u / Z
     return (v,Z)
