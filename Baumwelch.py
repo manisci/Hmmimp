@@ -4,6 +4,63 @@ from scipy import stats
 from forward import forward
 from backward import backward
 from forward_backward import forward_backward
+import itertools
+
+def permutations(iterable, r):
+    # permutations('ABCD', 2) --> AB AC AD BA BC BD CA CB CD DA DB DC
+    # permutations(range(3)) --> 012 021 102 120 201 210
+    pool = tuple(iterable)
+    n = len(pool)
+    r = n if r is None else r
+    if r > n:
+        return
+    indices = range(n)
+    cycles = range(n, n-r, -1)
+    yield tuple(pool[i] for i in indices[:r])
+    while n:
+        for i in reversed(range(r)):
+            cycles[i] -= 1
+            if cycles[i] == 0:
+                indices[i:] = indices[i+1:] + indices[i:i+1]
+                cycles[i] = n - i
+            else:
+                j = cycles[i]
+                indices[i], indices[-j] = indices[-j], indices[i]
+                yield tuple(pool[i] for i in indices[:r])
+                break
+        else:
+            return
+
+def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
+    numobscases = np.shape(obsmtrx)[1]
+    timelength = len(observations)
+    nstates = np.shape(obsmtrx)[0] 
+    Z = list(itertools.product(range(nstates),repeat = timelength))
+    firstelemsum = 0
+    secondelemsum = 0
+    thirdelemsum = 0
+    for z in Z:
+        thirdelem = 1.0
+        sumak = 0.0
+        summ = 0.0
+        for time in range(1,timelength):
+            thirdelem *= (float(transmtrx[z[time-1],z[time]]) * obsmtrx[z[time],observations[time]])
+            sumak += np.log(transmtrx[z[time-1],z[time]])
+            summ += np.log(obsmtrx[z[time],observations[time]])
+        p = pie[z[0]] * obsmtrx[z[0],observations[0]] * np.prod(transmtrx[z[1]]) * thirdelem
+        firstelemsum += float(np.log(pie[z[0]]) * p)
+        for time2 in range(1,timelength):
+            sumak += np.log(transmtrx[z[time2-1],z[time2]]) * p
+            summ += np.log(obsmtrx[z[time2],observations[time2]]) * p
+        summ += np.log(obsmtrx[z[0],observations[0]])        
+        secondelemsum += float(sumak * p)         
+        thirdelemsum += float(summ * p)
+    return firstelemsum + secondelemsum + thirdelemsum
+        
+
+    return 0
+
+
 
 
 def clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies):
@@ -90,6 +147,7 @@ def M_step(gammas,kissies,numobscases,observations):
             numerator = 0.0
             for time in range(timelength):
                 if int(observations[time]) == obs:
+                    # print "here"
                     numerator += gammas[time,state]
             newobsmtrx[state,obs] = float(numerator) / float(denom)
     (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
@@ -118,15 +176,17 @@ def Baumwelch(observations,numstates,numobscases,numsamples,exmodel):
     conv_threshold = 0.01
     diff_consec_params = 100
     counter = 0
-    print "should be getting smaller"
-    
-    while(counter < 50):
+    # print "should be getting smaller"
+    print "log likelihood value"
+    while(counter < 20):
         (gammas,kissies) = E_step(pie,transmtrx,obsmtrx,observations)
         (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
         prevpie = np.copy(pie)
         prevobsmtrx = np.copy(obsmtrx)
         prevtransmtrx = np.copy(transmtrx)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,numobscases,observations)
+        curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
+        print curloglikelihood
         (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)        
         piedist = np.linalg.norm(pie - prevpie ) / float(numstates)
         transdist = np.linalg.norm(transmtrx - prevtransmtrx) / float(numstates **2)
@@ -139,21 +199,22 @@ def Baumwelch(observations,numstates,numobscases,numsamples,exmodel):
         obsdistak = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
 
         # print piedistak
-        print transdistak
+        # print transdistak
         # print obsdistak
 
         # print pie
-    print "went this much in loop"
+    # print "went this much in loop"
     print counter
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmforward(3,3,1,200)
+    exmodel = hmmforward(2,2,1,10)
     numstates = exmodel.numofstates
     numobscases = exmodel.numofobsercases
     numsamples = 1
     observations = exmodel.observations
     (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,numsamples,exmodel)
+    (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
     obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
