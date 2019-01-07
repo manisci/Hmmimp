@@ -1,3 +1,4 @@
+import pytest 
 import numpy as np,numpy.random
 from init_forward import hmmforward
 from scipy import stats
@@ -5,26 +6,35 @@ from forward import forward
 from backward import backward
 from forward_backward import forward_backward
 from Baumwelch import Baumwelch
- 
 
-def main():
+@pytest.fixture
+def hmmexample():
     exmodel = hmmforward(2,3,1,20)
     exmodel.pie = np.array([0.5,0.5])
     exmodel.transitionmtrx = np.array([[.5,.5],[.5,.5]])
     exmodel.obsmtrx = np.array([[.4,.1,.5],[.1,.5,.4]])
-    numstates = exmodel.numofstates
-    numobscases = exmodel.numofobsercases
+    return exmodel
+ 
+
+def test_Baumwelch(hmmexample):
+
+    numstates = hmmexample.numofstates
+    numobscases = hmmexample.numofobsercases
     observations = np.array([2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1])
-    transmtrx = exmodel.transitionmtrx
-    obsmtrx = exmodel.obsmtrx
-    pie = exmodel.pie
-    (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis) = forward_backward(transmtrx,obsmtrx,pie,observations)
+    # expected values after running the algorithm
+    realtransmtrx = np.array([[.69,.31],[.09,.91]])
+    realobsmtrx = np.array([[.58 ,.001,.41],[0 , .76,.23]])
+    realpie = np.array([1,0])
     # print gammas
     # print most_likely_seq
-    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,exmodel)
-    print pie
-    print transmtrx
-    print obsmtrx
+    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,hmmexample)
+    assert (np.sum(pie - realpie) / float(numstates))  < 0.01
+    assert np.sum(transmtrx - realtransmtrx) /float(numstates**2) < 0.01 
+    assert np.sum(obsmtrx - realobsmtrx) /float(numstates*numobscases) < 0.01 
+    assert (np.max(pie - realpie) )< 0.1
+    assert np.max(transmtrx - realtransmtrx) < 0.1 
+    assert np.max(obsmtrx - realobsmtrx)  < 0.1 
+
     # (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     # piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
@@ -41,4 +51,3 @@ def main():
     # print obsmtrx
     # print piedist,transdist,obsdist
     # print "dooshag"
-main()

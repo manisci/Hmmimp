@@ -40,7 +40,7 @@ def viterbi(transmtrx,obsmtrx,pie,observations):
     optzis[timelength-1] = int(np.argmax(deltas[timelength-1,:]))
     for k in range(timelength-2,-1,-1):
         optzis[k] = As[k+1,int(optzis[k+1])]
-    return optzis
+    return (optzis,deltas)
 
 # def main():
 #     exmodel = hmmforward(5,10,500,500)

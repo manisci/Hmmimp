@@ -87,9 +87,15 @@ def normalize(u):
 
 def initializeparameters(observations,numstates,numobscases,numsamples):
     obscounts = [0] * numobscases
-    for obs in observations:
-        obscounts[int(obs)] +=1
-    obsprobs = np.array([float(item)/ float(len(observations)) for item in obscounts])
+    if numsamples == 1:
+        for obs in observations:
+            obscounts[int(obs)] +=1
+    else:
+        for samp in numsamples:
+            for obs in observations[samp,:]:
+                obscounts[int(obs)] +=1
+
+    obsprobs = np.array([float(item)/ float(numobscases) for item in obscounts])
     pie = np.random.dirichlet(np.ones(numstates),size=1)[0]
     transmtrx = np.empty((numstates,numstates))
     for i in range(numstates):
@@ -100,7 +106,7 @@ def initializeparameters(observations,numstates,numobscases,numsamples):
     return (pie,transmtrx,obsmtrx)
 
 def initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel):
-    scale = 1
+    scale = 5
     (pie,dummy) = normalize(exmodel.pie + abs(np.random.normal(0,scale,numstates)))
     transmtrx = np.empty((numstates,numstates))
     for i in range(numstates):
@@ -155,13 +161,16 @@ def M_step(gammas,kissies,numobscases,observations):
 
 
 
-def Baumwelch(observations,numstates,numobscases,numsamples,exmodel):
-    ''' you can convert the observations and obsmtrx all together into one matrix
-    called soft evidence which is a K * T matrix by using the corresponding
-    distribution across all the states for each time point and use that instead'''
+def Baumwelch(observations,numstates,numobscases,exmodel = None):
+    ''' exmodel is only used for initializations close to reality'''
+    if len(np.shape(observations)) != 1:
+        numsamples = np.shape(observations)[0]
+    else:
+        numsamples = 1
+
     # initialization
-    (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numobscases,numsamples)
-    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
+    # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numobscases,numsamples)
+    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
     (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     # print "realpie"
     # print exmodel.pie
@@ -186,8 +195,8 @@ def Baumwelch(observations,numstates,numobscases,numsamples,exmodel):
         prevobsmtrx = np.copy(obsmtrx)
         prevtransmtrx = np.copy(transmtrx)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,numobscases,observations)
-        curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
-        print curloglikelihood
+        # curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
+        # print curloglikelihood
         (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)        
         piedist = np.linalg.norm(pie - prevpie ) / float(numstates)
         transdist = np.linalg.norm(transmtrx - prevtransmtrx) / float(numstates **2)
@@ -208,26 +217,25 @@ def Baumwelch(observations,numstates,numobscases,numsamples,exmodel):
     print counter
     return (pie,transmtrx,obsmtrx) 
 
-# def main():
-#     exmodel = hmmforward(2,3,1,10)
-#     numstates = exmodel.numofstates
-#     numobscases = exmodel.numofobsercases
-#     numsamples = 1
-#     observations = exmodel.observations
-#     (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,numsamples,exmodel)
-#     (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
-#     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
-#     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
-#     obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
-#     print "realpie"
-#     print exmodel.pie
-#     print pie
-#     # print "realtrans"
-#     # print exmodel.transitionmtrx
-#     # print transmtrx
-#     # print "real obsmtrx"
-#     # print exmodel.obsmtrx
-#     # print obsmtrx
-#     print piedist,transdist,obsdist
-#     print "dooshag"
-# main()
+def main():
+    exmodel = hmmforward(2,3,1,10)
+    numstates = exmodel.numofstates
+    numobscases = exmodel.numofobsercases
+    observations = exmodel.observations
+    (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,exmodel)
+    (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+    piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
+    transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
+    obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
+    print "realpie"
+    print exmodel.pie
+    print pie
+    # print "realtrans"
+    # print exmodel.transitionmtrx
+    # print transmtrx
+    # print "real obsmtrx"
+    # print exmodel.obsmtrx
+    # print obsmtrx
+    print piedist,transdist,obsdist
+    print "dooshag"
+main()
