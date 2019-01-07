@@ -12,17 +12,34 @@ def normalize(u):
 
 def backward(transmtrx,obsmtrx,pie,observations):
     # initialization
-    numstates = np.shape(transmtrx)[0]
-    timelength = np.shape(observations)[0]
-    betas = np.empty((timelength,numstates))
-    (betas[timelength-1,:], dumm) = normalize(np.ones((1,numstates)))
-    # (betas[timelength-1,:],dummy) = normalize(betas[timelength-1,:])
-    # print betas[timelength-1,:]
-    for t in range(timelength-1,0,-1):
-        phi_t = obsmtrx[:,int(observations[t])]
-        (betas[t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))) 
-        # (betas[t-1,:],dummy) = normalize(betas[t-1,:])
-    (betas[0,:], doosh) = normalize(betas[0,:])
+    if len(np.shape(observations)) == 1:
+        numstates = np.shape(transmtrx)[0]
+        timelength = np.shape(observations)[0]
+        betas = np.empty((timelength,numstates))
+        (betas[timelength-1,:], dumm) = normalize(np.ones((1,numstates)))
+        # (betas[timelength-1,:],dummy) = normalize(betas[timelength-1,:])
+        # print betas[timelength-1,:]
+        for t in range(timelength-1,0,-1):
+            phi_t = obsmtrx[:,int(observations[t])]
+            (betas[t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))) 
+            # (betas[t-1,:],dummy) = normalize(betas[t-1,:])
+        (betas[0,:], doosh) = normalize(betas[0,:])
+    else:
+        # multiple samples
+        numstates = np.shape(transmtrx)[0]
+        numsamples = np.shape(observations)[0]
+        timelength = np.shape(observations)[1]
+        betas = np.empty((numsamples,timelength,numstates))
+        for sample in range(numsamples):
+            (betas[sample,timelength-1,:], dumm) = normalize(np.ones((1,numstates)))
+            # (betas[timelength-1,:],dummy) = normalize(betas[timelength-1,:])
+            # print betas[timelength-1,:]
+            for t in range(timelength-1,0,-1):
+                phi_t = obsmtrx[:,int(observations[sample,t])]
+                (betas[sample,t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))) 
+                # (betas[t-1,:],dummy) = normalize(betas[t-1,:])
+            (betas[sample,0,:], doosh) = normalize(betas[sample,0,:])
+
     return (betas)
 
 # def main():

@@ -4,6 +4,28 @@ from scipy import stats
 from forward import forward
 from backward import backward
 
+
+def clipmatrix(mtrx):
+    eps = 2.22044604925e-16
+    minpie = np.min(mtrx)
+    minarg = np.unravel_index(np.argmin(mtrx, axis=None), mtrx.shape)
+    mtrx[minarg] = eps
+    if len(np.shape(mtrx)) == 2:
+        for i in range(np.shape(mtrx)[0]):
+            for j in range(np.shape(mtrx)[1]):
+                if mtrx[i,j] < eps:
+                    mtrx[i,j] = eps +( mtrx[i,j] - minpie)
+                if mtrx[i,j] > 1:
+                    mtrx[i,j] = 1.0
+    elif len(np.shape(mtrx)) == 3 :
+        for i in range(np.shape(mtrx)[0]):
+            for j in range(np.shape(mtrx)[1]):
+                for k in range(np.shape(mtrx)[2]):
+                    if mtrx[i,j,k] < eps:
+                        mtrx[i,j,k] = eps +( mtrx[i,j,k] - minpie)
+                    if mtrx[i,j,k] > 1:
+                        mtrx[i,j,k] = 1.0
+    return mtrx
 def normalize(u):
     Z = np.sum(u)
     if Z==0:
@@ -12,34 +34,42 @@ def normalize(u):
         v = u / Z
     return (v,Z)
 
+
 def clipvalues_prevunderflowfw(alphas,betas,gammas,Ziis):
-    gammas = np.clip(gammas,2.22044604925e-16,1.0)
-    alphas = np.clip(alphas,2.22044604925e-16,1.0)
-    betas = np.clip(betas,2.22044604925e-16,1.0)
-    Ziis = np.clip(Ziis,2.22044604925e-16,1.0)
+    eps = 2.22044604925e-16
+    minpie = np.min(Ziis)
+    Ziis[np.argmin(Ziis)] = eps
+    for i in range(np.shape(Ziis)[0]):
+        if Ziis[i] < eps:
+            Ziis[i] = eps +( Ziis[i] - minpie)
+        if Ziis[i] > 1:
+            Ziis[i] = 1.0    
+    alphas = clipmatrix(alphas)
+    betas = clipmatrix(betas)
+    gammas = clipmatrix(gammas)
     return (alphas,betas,gammas,Ziis)
 
 def forward_backward(transmtrx,obsmtrx,pie,observations):
     # initialization
     numstates = np.shape(transmtrx)[0]
-    timelength = np.shape(observations)[0]
-    gammas = np.empty((timelength,numstates))
+    timelength = np.shape(observations)[1]
+    numsamples = np.shape(observations)[0]
+    gammas = np.empty((numsamples,timelength,numstates))
     (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis) = forward(transmtrx,obsmtrx,pie,observations)
     betas = backward(transmtrx,obsmtrx,pie,observations)
-    Zis = np.zeros((timelength,1))
-    most_likely_seq = np.empty((timelength,1))
+    Zis = np.zeros((numsamples,timelength))
+    most_likely_seq = np.empty((numsamples,timelength))
+    log_prob_most_likely_seq = np.empty((numsamples,1))
     # for i in range(timelength):
     #     betas[i,:] /= float(Ziis[i])
-
-    for t in range(timelength):
-        (gammas[t,:],Zis[t]) =  normalize(np.multiply(alphas[t,:],betas[t,:]))
-        most_likely_seq[t] = np.argmax(gammas[t,:])
-    (alphas,betas,gammas,Ziis) = clipvalues_prevunderflowfw(alphas,betas,gammas,Ziis)
-    log_prob_most_likely_seq = np.sum(np.log(Zis) + 2.22044604925e-16)
+    for sample in range(numsamples):
+        for t in range(timelength):
+            (gammas[sample,t,:],Zis[sample,t]) =  normalize(np.multiply(alphas[sample,t,:],betas[sample,t,:]))
+            most_likely_seq[sample,t] = np.argmax(gammas[sample,t,:])
+        (alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis) = clipvalues_prevunderflowfw(alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis)
+        log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]) + 2.22044604925e-16)
 
     return (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis)
-
-
 
 # def main():
 #     exmodel = hmmforward(5,10,2,50)

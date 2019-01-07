@@ -12,19 +12,37 @@ def normalize(u):
 
 def forward(transmtrx,obsmtrx,pie,observations):
     # initialization
-    numstates = np.shape(transmtrx)[0]
-    timelength = np.shape(observations)[0]
-    Zis =  np.empty((timelength,1))
-    most_likely_seq = np.empty((timelength,1))
-    alphas = np.empty((timelength,numstates))
-    phi0 = obsmtrx[:,int(observations[0])]
-    (alphas[0,:],Zis[0]) = normalize(np.multiply(phi0,pie)) 
-    most_likely_seq[0] = np.argmax(alphas[0,:])
-    for t in range(1,timelength):
-        phi_t = obsmtrx[:,int(observations[t])]
-        (alphas[t,:],Zis[t]) = normalize(np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:]))))
-        most_likely_seq[t] = np.argmax(alphas[t,:])
-    log_prob_most_likely_seq = np.sum(np.log(Zis) + 2.22044604925e-16 )
+    if len(observations) ==1 :
+        numstates = np.shape(transmtrx)[0]
+        timelength = np.shape(observations)[0]
+        Zis =  np.empty((timelength,1))
+        most_likely_seq = np.empty((timelength,1))
+        alphas = np.empty((timelength,numstates))
+        phi0 = obsmtrx[:,int(observations[0])]
+        (alphas[0,:],Zis[0]) = normalize(np.multiply(phi0,pie)) 
+        most_likely_seq[0] = np.argmax(alphas[0,:])
+        for t in range(1,timelength):
+            phi_t = obsmtrx[:,int(observations[t])]
+            (alphas[t,:],Zis[t]) = normalize(np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:]))))
+            most_likely_seq[t] = np.argmax(alphas[t,:])
+        log_prob_most_likely_seq = np.sum(np.log(Zis) + 2.22044604925e-16 )
+    else:
+        numsamples = np.shape(observations)[0]
+        numstates = np.shape(transmtrx)[0]
+        timelength = np.shape(observations)[1]
+        Zis =  np.empty((numsamples,timelength))
+        most_likely_seq = np.empty((numsamples,timelength))
+        alphas = np.empty((numsamples,timelength,numstates))
+        log_prob_most_likely_seq = np.empty((numsamples,1))
+        for sample in range(numsamples):
+            phi0 = obsmtrx[:,int(observations[sample,0])]
+            (alphas[sample,0,:],Zis[sample,0]) = normalize(np.multiply(phi0,pie)) 
+            most_likely_seq[sample,0] = np.argmax(alphas[sample,0,:])
+            for t in range(1,timelength):
+                phi_t = obsmtrx[:,int(observations[sample,t])]
+                (alphas[sample,t,:],Zis[sample,t]) = normalize(np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[sample,t-1,:]))))
+                most_likely_seq[sample,t] = np.argmax(alphas[sample,t,:])
+            log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]) + 2.22044604925e-16 )
     return (alphas,log_prob_most_likely_seq,most_likely_seq,Zis)
 
 
