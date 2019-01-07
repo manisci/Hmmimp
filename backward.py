@@ -26,7 +26,7 @@ def backward(transmtrx,obsmtrx,pie,observations):
     return (betas)
 
 # def main():
-#     exmodel = hmmforward(5,10,1,500)
+#     exmodel = hmmforward(5,10,1,500,1)
 #     observations = exmodel.observations
 #     pie = exmodel.pie
 #     transmtrx = exmodel.transitionmtrx

@@ -11,11 +11,12 @@ class hmmforward(object):
      ( the higher means less diversity, while a fraction means more diversity and default value is one), 
      and finally number of observations we want to generate from this model.
      '''
-    def __init__(self,initnumofstate=5,initnumofobsercases = 10,initpiequality = 1 ,initobserlength = 100):
+    def __init__(self,initnumofstate=5,initnumofobsercases = 10,initpiequality = 1 ,initobserlength = 100, initnumsamples = 1):
         self.numofstates = initnumofstate
         self.numofobsercases = initnumofobsercases
         self.piequality = initpiequality
         self.obserlength = initobserlength
+        self.numsamples = initnumsamples
         self.generatepie()
         self.generateobsmtrx()
         self.generatetransitionmtrx()
@@ -34,21 +35,39 @@ class hmmforward(object):
         for i in range(self.numofstates):
             (self.transitionmtrx)[i,:] = np.random.dirichlet(np.ones(self.numofstates) / self.transitionmtrxpriors[i],size=1)[0]
     def generateobservations(self):
-        self.observations = np.empty((self.obserlength,1),dtype = numpy.int8)
-        self.seqofstates = np.empty((self.obserlength,1))
-        elements = range(self.numofstates)
-        initialstate = np.random.choice(elements, 1, p=self.pie)[0]
-        elements = range(self.numofobsercases)
-        (self.observations)[0] = np.random.choice(elements, 1, p=list(self.obsmtrx[initialstate,:]))[0]
-        prevstate = initialstate
-        (self.seqofstates)[0] = initialstate
-        for i in range(1,self.obserlength):
+        if self.numsamples == 1:
+            self.observations = np.empty((self.obserlength,1),dtype = numpy.int8)
+            self.seqofstates = np.empty((self.obserlength,1))
             elements = range(self.numofstates)
-            nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+            initialstate = np.random.choice(elements, 1, p=self.pie)[0]
             elements = range(self.numofobsercases)
-            (self.observations)[i] = (np.random.choice(elements, 1, p=list(self.obsmtrx[nextstate,:])))[0]
-            (self.seqofstates)[i] = (nextstate)
-            prevstate = nextstate
+            (self.observations)[0] = np.random.choice(elements, 1, p=list(self.obsmtrx[initialstate,:]))[0]
+            prevstate = initialstate
+            (self.seqofstates)[0] = initialstate
+            for i in range(1,self.obserlength):
+                elements = range(self.numofstates)
+                nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                elements = range(self.numofobsercases)
+                (self.observations)[i] = (np.random.choice(elements, 1, p=list(self.obsmtrx[nextstate,:])))[0]
+                (self.seqofstates)[i] = (nextstate)
+                prevstate = nextstate
+        else:
+            self.observations = np.empty((self.numsamples,self.obserlength),dtype = numpy.int8)
+            self.seqofstates = np.empty((self.numsamples,self.obserlength))
+            for samnum in range(self.numsamples):
+                elements = range(self.numofstates)
+                initialstate = np.random.choice(elements, 1, p=self.pie)[0]
+                elements = range(self.numofobsercases)
+                (self.observations)[samnum,0] = np.random.choice(elements, 1, p=list(self.obsmtrx[initialstate,:]))[0]
+                prevstate = initialstate
+                (self.seqofstates)[samnum,0] = initialstate
+                for i in range(1,self.obserlength):
+                    elements = range(self.numofstates)
+                    nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                    elements = range(self.numofobsercases)
+                    (self.observations)[samnum,i] = (np.random.choice(elements, 1, p=list(self.obsmtrx[nextstate,:])))[0]
+                    (self.seqofstates)[samnum,i] = (nextstate)
+                    prevstate = nextstate
         
 
 # # just testing

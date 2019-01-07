@@ -5,7 +5,7 @@ from scipy import stats
 
 @pytest.fixture
 def hmmexample():
-    return hmmforward(5,10,2,500)
+    return hmmforward(5,10,2,500,1)
 
 def test_forward(hmmexample):
     # initialization

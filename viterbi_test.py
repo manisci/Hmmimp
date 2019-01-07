@@ -22,7 +22,7 @@ def test_viterbi(nums,numobscase,piequality,numobservs):
     called soft evidence which is a K * T matrix by using the corresponding
     distribution across all the states for each time point and use that instead'''
     # initialization
-    hmmexample = hmmforward(nums,numobscase,piequality,numobservs)
+    hmmexample = hmmforward(nums,numobscase,piequality,numobservs,1)
     numstates = np.shape(hmmexample.transitionmtrx)[0]
     timelength = np.shape(hmmexample.observations)[0]
     deltas = np.empty((timelength,numstates))
@@ -54,7 +54,7 @@ def test_viterbi(nums,numobscase,piequality,numobservs):
 
 
 # def main():
-#     exmodel = hmmforward(5,10,500,500)
+#     exmodel = hmmforward(5,10,500,500,1)
 #     observations = exmodel.observations
 #     pie = exmodel.pie
 #     transmtrx = exmodel.transitionmtrx

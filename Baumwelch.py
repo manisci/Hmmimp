@@ -219,7 +219,7 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     return (pie,transmtrx,obsmtrx) 
 
 # def main():
-#     exmodel = hmmforward(2,3,1,10)
+#     exmodel = hmmforward(2,3,1,10,1)
 #     numstates = exmodel.numofstates
 #     numobscases = exmodel.numofobsercases
 #     observations = exmodel.observations

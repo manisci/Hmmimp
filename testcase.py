@@ -8,7 +8,7 @@ from Baumwelch import Baumwelch
  
 
 def main():
-    exmodel = hmmforward(2,3,1,20)
+    exmodel = hmmforward(2,3,1,20,1)
     exmodel.pie = np.array([0.5,0.5])
     exmodel.transitionmtrx = np.array([[.5,.5],[.5,.5]])
     exmodel.obsmtrx = np.array([[.4,.1,.5],[.1,.5,.4]])

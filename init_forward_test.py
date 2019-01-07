@@ -5,7 +5,7 @@ import numpy as np
 
 @pytest.fixture
 def hmmexample():
-    return hmmforward(2,4,1,50)
+    return hmmforward(2,4,1,50,1)
 
 def test_setting(hmmexample):
     assert hmmexample.numofstates == 2

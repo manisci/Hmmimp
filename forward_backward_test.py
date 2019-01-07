@@ -21,7 +21,7 @@ def normalize(u):
 def test_foward_backward(nums,numobscase,piequality,numobservs):
     # initialization
     # numstates = np.shape(transmtrx)[0]
-    hmmexample = hmmforward(nums,numobscase,piequality,numobservs)
+    hmmexample = hmmforward(nums,numobscase,piequality,numobservs,1)
     timelength = np.shape(hmmexample.observations)[0]
     gammas = np.empty((timelength,nums))
     (alphas,log_prob_most_likely_seq,most_likely_seq,Zis) = forward(hmmexample.transitionmtrx,hmmexample.obsmtrx,hmmexample.pie,hmmexample.observations)

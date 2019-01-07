@@ -13,7 +13,7 @@ def getseqofstates(numstates,numobscases,numsamples,observations):
     being in each state for each timestep, as a second argument of size numtimesteps * numstates'''
     # print gammas
     # print most_likely_seq
-    exmodel = hmmforward(numstates,numobscases,1,len(observations))
+    exmodel = hmmforward(numstates,numobscases,1,len(observations),1)
     (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,numsamples,exmodel)
     (seq_states ,deltas)= viterbi(transmtrx,obsmtrx,pie,observations)
     return (seq_states,deltas)
@@ -21,7 +21,7 @@ def main():
     numstates = 2
     numobscases = 3
     numsamples = 1
-    exmodel = hmmforward(numstates,numobscases,1,20)
+    exmodel = hmmforward(numstates,numobscases,1,20,1)
     observations = exmodel.observations
     (seqofstates,deltas) = getseqofstates(numstates,numobscases,numsamples,observations)
     realseqofstates = exmodel.seqofstates
