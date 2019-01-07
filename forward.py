@@ -14,7 +14,7 @@ def forward(transmtrx,obsmtrx,pie,observations):
     # initialization
     numstates = np.shape(transmtrx)[0]
     timelength = np.shape(observations)[0]
-    Zis =  np.zeros((timelength,1))
+    Zis =  np.empty((timelength,1))
     most_likely_seq = np.empty((timelength,1))
     alphas = np.empty((timelength,numstates))
     phi0 = obsmtrx[:,int(observations[0])]

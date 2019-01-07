@@ -14,7 +14,7 @@ def backward(transmtrx,obsmtrx,pie,observations):
     # initialization
     numstates = np.shape(transmtrx)[0]
     timelength = np.shape(observations)[0]
-    betas = np.zeros((timelength,numstates))
+    betas = np.empty((timelength,numstates))
     (betas[timelength-1,:], dumm) = normalize(np.ones((1,numstates)))
     # (betas[timelength-1,:],dummy) = normalize(betas[timelength-1,:])
     # print betas[timelength-1,:]

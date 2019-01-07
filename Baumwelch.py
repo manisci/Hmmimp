@@ -63,19 +63,54 @@ def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
 
 
 
-
+def clipmatrix(mtrx):
+    eps = 2.22044604925e-16
+    minpie = np.min(mtrx)
+    minarg = np.unravel_index(np.argmin(mtrx, axis=None), mtrx.shape)
+    mtrx[minarg] = eps
+    if len(np.shape(mtrx)) == 2:
+        for i in range(np.shape(mtrx)[0]):
+            for j in range(np.shape(mtrx)[1]):
+                if mtrx[i,j] < eps:
+                    mtrx[i,j] = eps +( mtrx[i,j] - minpie)
+                if mtrx[i,j] > 1:
+                    mtrx[i,j] = 1.0
+    else:
+        for i in range(np.shape(mtrx)[0]):
+            for j in range(np.shape(mtrx)[1]):
+                for k in range(np.shape(mtrx)[2]):
+                    if mtrx[i,j,k] < eps:
+                        mtrx[i,j,k] = eps +( mtrx[i,j,k] - minpie)
+                    if mtrx[i,j,k] > 1:
+                        mtrx[i,j,k] = 1.0
+        
+    return mtrx
 def clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies):
-    pie = np.clip(pie,2.22044604925e-16,1.0)
-    transmtrx = np.clip(transmtrx,2.22044604925e-16,1.0)
-    obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
-    gammas = np.clip(gammas,2.22044604925e-16,1.0)
-    kissies = np.clip(kissies,2.22044604925e-16,1.0)
+    eps = 2.22044604925e-16
+    minpie = np.min(pie)
+    pie[np.argmin(pie)] = eps
+    for i in range(np.shape(pie)[0]):
+        if pie[i] < eps:
+            pie[i] = eps +( pie[i] - minpie)
+        if pie[i] > 1:
+            pie[i] = 1.0
+    transmtrx = clipmatrix(transmtrx)
+    obsmtrx = clipmatrix(obsmtrx)
+    gammas = clipmatrix(gammas)
+    kissies = clipmatrix(kissies)
     return (pie,transmtrx,obsmtrx,gammas,kissies)
 
 def clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx):
-    pie = np.clip(pie,2.22044604925e-16,1.0)
-    transmtrx = np.clip(transmtrx,2.22044604925e-16,1.0)
-    obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
+    eps = 2.22044604925e-16
+    minpie = np.min(pie)
+    pie[np.argmin(pie)] = eps
+    for i in range(np.shape(pie)[0]):
+        if pie[i] < eps:
+            pie[i] = eps +( pie[i] - minpie)
+        if pie[i] > 1:
+            pie[i] = 1.0    
+    transmtrx = clipmatrix(transmtrx)
+    obsmtrx = clipmatrix(obsmtrx)
     return (pie,transmtrx,obsmtrx)
 
 def normalize(u):
@@ -159,8 +194,6 @@ def M_step(gammas,kissies,numobscases,observations):
             newobsmtrx[state,obs] = float(numerator) / float(denom)
     (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
-
-
 
 def Baumwelch(observations,numstates,numobscases,exmodel = None):
     ''' exmodel is only used for initializations close to reality'''
