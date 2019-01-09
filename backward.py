@@ -11,6 +11,8 @@ def normalize(u):
     return (v,Z)
 
 def backward(transmtrx,obsmtrx,pie,observations):
+    ''' Input : Transition matrix, pie, state_observation probs, observations
+    Output: betas,  Probablities of observing the rest of the observations from that point on, given that we are at a given state at a give timepoint for each sample'''
     # initialization
     if len(np.shape(observations)) == 1:
         numstates = np.shape(transmtrx)[0]

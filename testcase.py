@@ -22,9 +22,10 @@ def main():
     # print gammas
     # print most_likely_seq
     (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,exmodel)
-    print pie
     print transmtrx
+    print exmodel.transitionmtrx
     print obsmtrx
+    print exmodel.obsmtrx
     # (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     # piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)

@@ -11,6 +11,11 @@ def normalize(u):
 
 
 def forward(transmtrx,obsmtrx,pie,observations):
+    ''' Input: Transition matrix, pie, state_observation probs, observations
+    Output: alphas Probabilites of being in different states at each time point for each sample given the observations till that point, i.e filteing 
+    also most likely sequence of staets and its associated probabilies
+    Used the equations in Machine learning a probabilistic appraoch, Kevin Murphy
+    '''
     # initialization
     if len(np.shape(observations)) == 1 :
         numstates = np.shape(transmtrx)[0]
@@ -48,6 +53,7 @@ def forward(transmtrx,obsmtrx,pie,observations):
 
 
 # def main():
+# small test case
 #     exmodel = hmmforward(5,10,1,500)
 #     observations = exmodel.observations
 #     pie = exmodel.pie

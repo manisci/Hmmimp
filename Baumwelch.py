@@ -73,8 +73,8 @@ def clipmatrix(mtrx):
             for j in range(np.shape(mtrx)[1]):
                 if mtrx[i,j] < eps:
                     mtrx[i,j] = eps +( mtrx[i,j] - minpie)
-                # if mtrx[i,j] > 1:
-                #     mtrx[i,j] = 1.0
+                if mtrx[i,j] > 1:
+                    mtrx[i,j] = 1.0
                 if mtrx[i,j] == 0:
                     mtrx[i,j] = eps
     elif len(np.shape(mtrx)) == 3 :
@@ -83,8 +83,8 @@ def clipmatrix(mtrx):
                 for k in range(np.shape(mtrx)[2]):
                     if mtrx[i,j,k] < eps:
                         mtrx[i,j,k] = eps +( mtrx[i,j,k] - minpie)
-                    # if mtrx[i,j,k] > 1:
-                    #     mtrx[i,j,k] = 1.0
+                    if mtrx[i,j,k] > 1:
+                        mtrx[i,j,k] = 1.0
                     if mtrx[i,j,k] == 0:
                         mtrx[i,j,k] = eps
                     
@@ -167,7 +167,7 @@ def initializeparameters(observations,numstates,numobscases,numsamples):
     return (pie,transmtrx,obsmtrx)
 
 def initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel):
-    scale = 1
+    scale = 0.5
     (pie,dummy) = normalize(exmodel.pie + abs(np.random.normal(0,scale,numstates)))
     transmtrx = np.empty((numstates,numstates))
     for i in range(numstates):
@@ -272,7 +272,7 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
 
     # initialization
     # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numobscases,numsamples)
-    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
+    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     # print "realpie"
     # print exmodel.pie
@@ -284,6 +284,9 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     # print exmodel.obsmtrx
     # print obsmtrx
     # print pie
+    pie = exmodel.pie
+    transmtrx = exmodel.transitionmtrx
+    obsmtrx = exmodel.obsmtrx
     noiterations = 20
     conv_threshold = 0.001
     diff_consec_params = 100

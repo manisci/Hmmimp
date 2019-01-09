@@ -6,6 +6,7 @@ from backward import backward
 
 
 def clipmatrix(mtrx):
+    # preventing underflow ?
     eps = 2.22044604925e-16
     minpie = np.min(mtrx)
     minarg = np.unravel_index(np.argmin(mtrx, axis=None), mtrx.shape)
@@ -56,6 +57,10 @@ def clipvalues_prevunderflowfw(alphas,betas,gammas,Ziis):
     return (alphas,betas,gammas,Ziis)
 
 def forward_backward(transmtrx,obsmtrx,pie,observations):
+    ''' Input : Transition matrix, pie, state_observation probs, observations
+    Output : alphas, betas, gammas -->  Probablities of being at different states, at each timepoint for each sample, given the observation at all time, smoothing
+    also most likely sequence of staets and its associated probabilies
+    '''
     # initialization
     if len(np.shape(observations)) == 2:
         numstates = np.shape(transmtrx)[0]

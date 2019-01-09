@@ -14,9 +14,10 @@ def normalize(u):
     return (v,Z)
 
 def viterbi(transmtrx,obsmtrx,pie,observations):
-    ''' you can convert the observations and obsmtrx all together into one matrix
-    called soft evidence which is a K * T matrix by using the corresponding
-    distribution across all the states for each time point and use that instead'''
+    ''' Input : Transition matrix, pie, state_observation probs, observations
+    Output : The most likely sequence of states (and also the probabilite for each time point) and its probabilite for the given observations
+    Unlike forward backward, considers the most probable sequence given the state for all time points
+    not just the optimum state individually for each time point'''
     # initialization
     numstates = np.shape(transmtrx)[0]
     timelength = np.shape(observations)[0]
