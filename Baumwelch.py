@@ -73,8 +73,8 @@ def clipmatrix(mtrx):
             for j in range(np.shape(mtrx)[1]):
                 if mtrx[i,j] < eps:
                     mtrx[i,j] = eps +( mtrx[i,j] - minpie)
-                if mtrx[i,j] > 1:
-                    mtrx[i,j] = 1.0
+                # if mtrx[i,j] > 1:
+                #     mtrx[i,j] = 1.0
                 if mtrx[i,j] == 0:
                     mtrx[i,j] = eps
     elif len(np.shape(mtrx)) == 3 :
@@ -83,8 +83,8 @@ def clipmatrix(mtrx):
                 for k in range(np.shape(mtrx)[2]):
                     if mtrx[i,j,k] < eps:
                         mtrx[i,j,k] = eps +( mtrx[i,j,k] - minpie)
-                    if mtrx[i,j,k] > 1:
-                        mtrx[i,j,k] = 1.0
+                    # if mtrx[i,j,k] > 1:
+                    #     mtrx[i,j,k] = 1.0
                     if mtrx[i,j,k] == 0:
                         mtrx[i,j,k] = eps
                     
@@ -95,8 +95,8 @@ def clipmatrix(mtrx):
                     for l in range(np.shape(mtrx)[3]):
                         if mtrx[i,j,k,l] < eps:
                             mtrx[i,j,k,l] = eps +( mtrx[i,j,k,l] - minpie)
-                        if mtrx[i,j,k,l] > 1:
-                            mtrx[i,j,k,l] = 1.0 
+                        # if mtrx[i,j,k,l] > 1:
+                        #     mtrx[i,j,k,l] = 1.0 
                         if mtrx[i,j,k,l] == 0:
                             mtrx[i,j,k,l] = eps      
         
@@ -196,7 +196,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
                     for s in range(numstate):
                         kissies[sample,t,q,s] = float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsmtrx[s,int(observations[sample,t+1])] * betas[sample,t+1,s])
                 (kissies[sample,t,:,:],dummy) = normalize(kissies[sample,t,:,:])
-        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
+        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
     else:
         timelength = len(observations)
 
@@ -210,7 +210,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
                 for s in range(numstate):
                     kissies[t,q,s] = float(alphas[t,q]) * float(transmtrx[q,s]) * float(obsmtrx[s,int(observations[t+1])] * betas[t+1,s])
             (kissies[t,:,:],dummy) = normalize(kissies[t,:,:])
-        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
+        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
 
     return (gammas,kissies)
 
@@ -260,7 +260,7 @@ def M_step(gammas,kissies,numobscases,observations):
                         # print "here"
                         numerator += gammas[time,state]
                 newobsmtrx[state,obs] = float(numerator) / float(denom)
-    (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
+    # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
 
 def Baumwelch(observations,numstates,numobscases,exmodel = None):
@@ -271,9 +271,9 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
         numsamples = 1
 
     # initialization
-    (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numobscases,numsamples)
-    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
-    (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+    # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numobscases,numsamples)
+    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
+    # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     # print "realpie"
     # print exmodel.pie
     # print pie
@@ -292,14 +292,14 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     print "log likelihood value"
     while(counter < noiterations):
         (gammas,kissies) = E_step(pie,transmtrx,obsmtrx,observations)
-        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
+        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
         prevpie = np.copy(pie)
         prevobsmtrx = np.copy(obsmtrx)
         prevtransmtrx = np.copy(transmtrx)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,numobscases,observations)
         # curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
         # print curloglikelihood
-        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)        
+        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)        
         piedist = np.linalg.norm(pie - prevpie ) / float(numstates)
         transdist = np.linalg.norm(transmtrx - prevtransmtrx) / float(numstates **2)
         obsdist = np.linalg.norm(obsmtrx - prevobsmtrx) / float(numobscases * numstates)

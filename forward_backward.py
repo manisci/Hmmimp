@@ -15,8 +15,8 @@ def clipmatrix(mtrx):
             for j in range(np.shape(mtrx)[1]):
                 if mtrx[i,j] < eps:
                     mtrx[i,j] = eps +( mtrx[i,j] - minpie)
-                if mtrx[i,j] > 1:
-                    mtrx[i,j] = 1.0
+                # if mtrx[i,j] > 1:
+                #     mtrx[i,j] = 1.0
                 if mtrx[i,j] == 0:
                     mtrx[i,j] = eps
     elif len(np.shape(mtrx)) == 3 :
@@ -25,8 +25,8 @@ def clipmatrix(mtrx):
                 for k in range(np.shape(mtrx)[2]):
                     if mtrx[i,j,k] < eps:
                         mtrx[i,j,k] = eps +( mtrx[i,j,k] - minpie)
-                    if mtrx[i,j,k] > 1:
-                        mtrx[i,j,k] = 1.0
+                    # if mtrx[i,j,k] > 1:
+                    #     mtrx[i,j,k] = 1.0
                     if mtrx[i,j,k] == 0:
                         mtrx[i,j,k] = eps
     return mtrx
@@ -73,7 +73,7 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
             for t in range(timelength):
                 (gammas[sample,t,:],Zis[sample,t]) =  normalize(np.multiply(alphas[sample,t,:],betas[sample,t,:]))
                 most_likely_seq[sample,t] = np.argmax(gammas[sample,t,:])
-            (alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis) = clipvalues_prevunderflowfw(alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis)
+            # (alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis) = clipvalues_prevunderflowfw(alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis)
             log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]) + 2.22044604925e-16)
     else:
         numstates = np.shape(transmtrx)[0]
@@ -88,7 +88,7 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
         for t in range(timelength):
             (gammas[t,:],Zis[t]) =  normalize(np.multiply(alphas[t,:],betas[t,:]))
             most_likely_seq[t] = np.argmax(gammas[t,:])
-        (alphas,betas,gammas,Ziis) = clipvalues_prevunderflowfw(alphas,betas,gammas,Ziis)
+        # (alphas,betas,gammas,Ziis) = clipvalues_prevunderflowfw(alphas,betas,gammas,Ziis)
         log_prob_most_likely_seq = np.sum(np.log(Zis[:]) + 2.22044604925e-16)
 
 
