@@ -12,7 +12,7 @@ def normalize(u):
 
 def forward(transmtrx,obsmtrx,pie,observations):
     # initialization
-    if len(observations) ==1 :
+    if len(np.shape(observations)) == 1 :
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
         Zis =  np.empty((timelength,1))

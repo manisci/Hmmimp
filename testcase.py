@@ -18,7 +18,7 @@ def main():
     transmtrx = exmodel.transitionmtrx
     obsmtrx = exmodel.obsmtrx
     pie = exmodel.pie
-    (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis) = forward_backward(transmtrx,obsmtrx,pie,observations)
+    # (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis) = forward_backward(transmtrx,obsmtrx,pie,observations)
     # print gammas
     # print most_likely_seq
     (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,exmodel)

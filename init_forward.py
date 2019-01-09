@@ -36,8 +36,8 @@ class hmmforward(object):
             (self.transitionmtrx)[i,:] = np.random.dirichlet(np.ones(self.numofstates) / self.transitionmtrxpriors[i],size=1)[0]
     def generateobservations(self):
         if self.numsamples == 1:
-            self.observations = np.empty((self.obserlength,1),dtype = numpy.int8)
-            self.seqofstates = np.empty((self.obserlength,1))
+            self.observations = np.empty((self.obserlength),dtype = numpy.int8)
+            self.seqofstates = np.empty((self.obserlength))
             elements = range(self.numofstates)
             initialstate = np.random.choice(elements, 1, p=self.pie)[0]
             elements = range(self.numofobsercases)
