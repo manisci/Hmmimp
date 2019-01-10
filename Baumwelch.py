@@ -6,32 +6,8 @@ from backward import backward
 from forward_backward import forward_backward
 import itertools
 
-def permutations(iterable, r):
-    # permutations('ABCD', 2) --> AB AC AD BA BC BD CA CB CD DA DB DC
-    # permutations(range(3)) --> 012 021 102 120 201 210
-    pool = tuple(iterable)
-    n = len(pool)
-    r = n if r is None else r
-    if r > n:
-        return
-    indices = range(n)
-    cycles = range(n, n-r, -1)
-    yield tuple(pool[i] for i in indices[:r])
-    while n:
-        for i in reversed(range(r)):
-            cycles[i] -= 1
-            if cycles[i] == 0:
-                indices[i:] = indices[i+1:] + indices[i:i+1]
-                cycles[i] = n - i
-            else:
-                j = cycles[i]
-                indices[i], indices[-j] = indices[-j], indices[i]
-                yield tuple(pool[i] for i in indices[:r])
-                break
-        else:
-            return
 
-# def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
+# def computeloglikelihoodd(pie,transmtrx,obsmtrx,observations):
 #     numobscases = np.shape(obsmtrx)[1]
 #     timelength = np.shape(observations)[1]
 #     numsamples = np.shape(observations)[0]
@@ -42,99 +18,142 @@ def permutations(iterable, r):
 #     thirdelemsum = 0.0
 #     for z in Z:
 #         thirdelem = 1.0
-#         sumak = 0.0
-#         summ = 0.0
+#         secpmdsum = 0.0
+#         thirdsum = 0.0
 #         for time in range(1,timelength):
-#             sumak += np.log(transmtrx[z[time-1],z[time]])
+#             secpmdsum += np.log(transmtrx[z[time-1],z[time]])
 #             for sample in range(numsamples):
 #                 thirdelem *= (float(transmtrx[z[time-1],z[time]]) * obsmtrx[z[time],observations[sample,time]])
-#                 summ += np.log(obsmtrx[z[time],observations[sample,time]])
+#                 thirdsum += np.log(obsmtrx[z[time],observations[sample,time]])
 #         # np.prod(transmtrx[z[1]]) extra ?
 #         p = float(pie[z[0]] * obsmtrx[z[0],observations[0]] * thirdelem)
 #         firstelemsum += float(np.log(pie[z[0]]) * p)
 #         for time2 in range(1,timelength):
-#             sumak += np.log(transmtrx[z[time2-1],z[time2]]) 
-#             summ += np.log(obsmtrx[z[time2],observations[time2]]) 
-#         summ += np.log(obsmtrx[z[0],observations[0]])        
-#         secondelemsum += float(sumak * p)         
-#         thirdelemsum += float(summ * p)
+#             secpmdsum += np.log(transmtrx[z[time2-1],z[time2]]) 
+#             thirdsum += np.log(obsmtrx[z[time2],observations[time2]]) 
+#         thirdsum += np.log(obsmtrx[z[0],observations[0]])        
+#         secondelemsum += float(secpmdsum * p)         
+#         thirdelemsum += float(thirdsum * p)
 #     print "doosh doosgh"
 #     return firstelemsum + secondelemsum + thirdelemsum
 
+def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
+    numobscases = np.shape(obsmtrx)[1]
+    if len(np.shape(observations)) == 1:
+        timelength = np.shape(observations)[0]
+    else:
+        timelength = np.shape(observations)[1]
+    nstates = np.shape(obsmtrx)[0] 
+    Z = list(itertools.product(range(nstates),repeat = timelength))
+    firstelemsum = 0.0
+    secondelemsum = 0.0
+    thirdelemsum = 0.0
+    for z in Z:
+        thirdelem = 1.0
+        secpmdsum = 0.0
+        thirdsum = 0.0
+        for time in range(1,timelength):
+            thirdelem *= (float(transmtrx[z[time-1],z[time]]) * obsmtrx[z[time],int(observations[time])])
+            secpmdsum += np.log(transmtrx[z[time-1] , z[time]])
+            thirdsum += np.log(obsmtrx[z[time],int(observations[time])])
+        # np.prod(transmtrx[z[1]]) extra ?
+        p = float(pie[z[0]] * obsmtrx[z[0],observations[0]] * thirdelem)
+        # for time2 in range(1,timelength):
+        #     secpmdsum += np.log(transmtrx[z[time2-1] , z[time2]]) 
+        #     thirdsum += np.log(obsmtrx[z[time2] , observations[time2]]) 
+        thirdsum += np.log(obsmtrx[z[0] , observations[0]])
+        firstelemsum += float(np.log(pie[z[0]]) * p)        
+        secondelemsum += float(secpmdsum * p)         
+        thirdelemsum += float(thirdsum * p)
+    return firstelemsum + secondelemsum + thirdelemsum
 
-
-def clipmatrix(mtrx):
-    eps = 2.22044604925e-16
-    minpie = np.min(mtrx)
-    minarg = np.unravel_index(np.argmin(mtrx, axis=None), mtrx.shape)
-    mtrx[minarg] = eps
-    if len(np.shape(mtrx)) == 2:
-        for i in range(np.shape(mtrx)[0]):
-            for j in range(np.shape(mtrx)[1]):
-                if mtrx[i,j] < eps:
-                    mtrx[i,j] = eps +( mtrx[i,j] - minpie)
-                if mtrx[i,j] > 1:
-                    mtrx[i,j] = 1.0
-                if mtrx[i,j] == 0:
-                    mtrx[i,j] = eps
-    elif len(np.shape(mtrx)) == 3 :
-        for i in range(np.shape(mtrx)[0]):
-            for j in range(np.shape(mtrx)[1]):
-                for k in range(np.shape(mtrx)[2]):
-                    if mtrx[i,j,k] < eps:
-                        mtrx[i,j,k] = eps +( mtrx[i,j,k] - minpie)
-                    if mtrx[i,j,k] > 1:
-                        mtrx[i,j,k] = 1.0
-                    if mtrx[i,j,k] == 0:
-                        mtrx[i,j,k] = eps
+# advanced version :D
+# def clipmatrix(mtrx):
+#     eps = 2.22044604925e-16
+#     minpie = np.min(mtrx)
+#     minarg = np.unravel_index(np.argmin(mtrx, axis=None), mtrx.shape)
+#     mtrx[minarg] = eps
+#     if len(np.shape(mtrx)) == 2:
+#         for i in range(np.shape(mtrx)[0]):
+#             for j in range(np.shape(mtrx)[1]):
+#                 if mtrx[i,j] < eps:
+#                     mtrx[i,j] = eps +( mtrx[i,j] - minpie)
+#                 if mtrx[i,j] > 1:
+#                     mtrx[i,j] = 1.0
+#                 if mtrx[i,j] == 0:
+#                     mtrx[i,j] = eps
+#     elif len(np.shape(mtrx)) == 3 :
+#         for i in range(np.shape(mtrx)[0]):
+#             for j in range(np.shape(mtrx)[1]):
+#                 for k in range(np.shape(mtrx)[2]):
+#                     if mtrx[i,j,k] < eps:
+#                         mtrx[i,j,k] = eps +( mtrx[i,j,k] - minpie)
+#                     if mtrx[i,j,k] > 1:
+#                         mtrx[i,j,k] = 1.0
+#                     if mtrx[i,j,k] == 0:
+#                         mtrx[i,j,k] = eps
                     
-    elif len(np.shape(mtrx)) == 4:
-        for i in range(np.shape(mtrx)[0]):
-            for j in range(np.shape(mtrx)[1]):
-                for k in range(np.shape(mtrx)[2]):
-                    for l in range(np.shape(mtrx)[3]):
-                        if mtrx[i,j,k,l] < eps:
-                            mtrx[i,j,k,l] = eps +( mtrx[i,j,k,l] - minpie)
-                        # if mtrx[i,j,k,l] > 1:
-                        #     mtrx[i,j,k,l] = 1.0 
-                        if mtrx[i,j,k,l] == 0:
-                            mtrx[i,j,k,l] = eps      
+#     elif len(np.shape(mtrx)) == 4:
+#         for i in range(np.shape(mtrx)[0]):
+#             for j in range(np.shape(mtrx)[1]):
+#                 for k in range(np.shape(mtrx)[2]):
+#                     for l in range(np.shape(mtrx)[3]):
+#                         if mtrx[i,j,k,l] < eps:
+#                             mtrx[i,j,k,l] = eps +( mtrx[i,j,k,l] - minpie)
+#                         # if mtrx[i,j,k,l] > 1:
+#                         #     mtrx[i,j,k,l] = 1.0 
+#                         if mtrx[i,j,k,l] == 0:
+#                             mtrx[i,j,k,l] = eps      
         
 
+# Simple version
 
-        
-    return mtrx
 def clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies):
-    eps = 2.22044604925e-16
-    minpie = np.min(pie)
-    pie[np.argmin(pie)] = eps
-    for i in range(np.shape(pie)[0]):
-        if pie[i] < eps:
-            pie[i] = eps +( pie[i] - minpie)
-        if pie[i] > 1:
-            pie[i] = 1.0
-        if pie[i] == 0:
-            pie[i] = eps
-    transmtrx = clipmatrix(transmtrx)
-    obsmtrx = clipmatrix(obsmtrx)
-    gammas = clipmatrix(gammas)
-    kissies = clipmatrix(kissies)
+    pie = np.clip(pie,2.22044604925e-16,1.0)
+    transmtrx = np.clip(transmtrx,2.22044604925e-16,1.0)
+    obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
+    gammas = np.clip(gammas,2.22044604925e-16,1.0)
+    kissies = np.clip(kissies,2.22044604925e-16,1.0)
     return (pie,transmtrx,obsmtrx,gammas,kissies)
 
 def clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx):
-    eps = 2.22044604925e-16
-    minpie = np.min(pie)
-    pie[np.argmin(pie)] = eps
-    for i in range(np.shape(pie)[0]):
-        if pie[i] < eps:
-            pie[i] = eps +( pie[i] - minpie)
-        if pie[i] > 1:
-            pie[i] = 1.0
-        if pie[i] == 0:
-            pie[i] = eps    
-    transmtrx = clipmatrix(transmtrx)
-    obsmtrx = clipmatrix(obsmtrx)
+    pie = np.clip(pie,2.22044604925e-16,1.0)
+    transmtrx = np.clip(transmtrx,2.22044604925e-16,1.0)
+    obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
     return (pie,transmtrx,obsmtrx)
+ 
+#     return mtrx
+# def clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies):
+#     eps = 2.22044604925e-16
+#     minpie = np.min(pie)
+#     pie[np.argmin(pie)] = eps
+#     for i in range(np.shape(pie)[0]):
+#         if pie[i] < eps:
+#             pie[i] = eps +( pie[i] - minpie)
+#         if pie[i] > 1:
+#             pie[i] = 1.0
+#         if pie[i] == 0:
+#             pie[i] = eps
+#     transmtrx = clipmatrix(transmtrx)
+#     obsmtrx = clipmatrix(obsmtrx)
+#     gammas = clipmatrix(gammas)
+#     kissies = clipmatrix(kissies)
+#     return (pie,transmtrx,obsmtrx,gammas,kissies)
+
+# def clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx):
+#     eps = 2.22044604925e-16
+#     minpie = np.min(pie)
+#     pie[np.argmin(pie)] = eps
+#     for i in range(np.shape(pie)[0]):
+#         if pie[i] < eps:
+#             pie[i] = eps +( pie[i] - minpie)
+#         if pie[i] > 1:
+#             pie[i] = 1.0
+#         if pie[i] == 0:
+#             pie[i] = eps    
+#     transmtrx = clipmatrix(transmtrx)
+#     obsmtrx = clipmatrix(obsmtrx)
+#     return (pie,transmtrx,obsmtrx)
 
 def normalize(u):
     Z = np.sum(u)
@@ -196,7 +215,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
                     for s in range(numstate):
                         kissies[sample,t,q,s] = float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsmtrx[s,int(observations[sample,t+1])] * betas[sample,t+1,s])
                 (kissies[sample,t,:,:],dummy) = normalize(kissies[sample,t,:,:])
-        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
+        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
     else:
         timelength = len(observations)
 
@@ -210,7 +229,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
                 for s in range(numstate):
                     kissies[t,q,s] = float(alphas[t,q]) * float(transmtrx[q,s]) * float(obsmtrx[s,int(observations[t+1])] * betas[t+1,s])
             (kissies[t,:,:],dummy) = normalize(kissies[t,:,:])
-        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
+        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
 
     return (gammas,kissies)
 
@@ -260,7 +279,7 @@ def M_step(gammas,kissies,numobscases,observations):
                         # print "here"
                         numerator += gammas[time,state]
                 newobsmtrx[state,obs] = float(numerator) / float(denom)
-    # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
+    (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
 
 def Baumwelch(observations,numstates,numobscases,exmodel = None):
@@ -295,14 +314,14 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     print "log likelihood value"
     while(counter < noiterations):
         (gammas,kissies) = E_step(pie,transmtrx,obsmtrx,observations)
-        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
+        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
         prevpie = np.copy(pie)
         prevobsmtrx = np.copy(obsmtrx)
         prevtransmtrx = np.copy(transmtrx)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,numobscases,observations)
-        # curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
-        # print curloglikelihood
-        # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)        
+        (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)        
+        curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
+        print curloglikelihood
         piedist = np.linalg.norm(pie - prevpie ) / float(numstates)
         transdist = np.linalg.norm(transmtrx - prevtransmtrx) / float(numstates **2)
         obsdist = np.linalg.norm(obsmtrx - prevobsmtrx) / float(numobscases * numstates)
@@ -321,25 +340,25 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     # print "went this much in loop"
     return (pie,transmtrx,obsmtrx) 
 
-# def main():
-#     exmodel = hmmforward(2,3,1,10,1)
-#     numstates = exmodel.numofstates
-#     numobscases = exmodel.numofobsercases
-#     observations = exmodel.observations
-#     (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,exmodel)
-#     (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
-#     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
-#     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
-#     obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
-#     print "realpie"
-#     print exmodel.pie
-#     print pie
-#     # print "realtrans"
-#     # print exmodel.transitionmtrx
-#     print transmtrx
-#     # print "real obsmtrx"
-#     # print exmodel.obsmtrx
-#     # print obsmtrx
-#     print piedist,transdist,obsdist
-#     print "dooshag"
-# main()
+def main():
+    exmodel = hmmforward(2,3,1,15,1)
+    numstates = exmodel.numofstates
+    numobscases = exmodel.numofobsercases
+    observations = exmodel.observations
+    (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,exmodel)
+    (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+    piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
+    transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
+    obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
+    print "realpie"
+    print exmodel.pie
+    print pie
+    # print "realtrans"
+    # print exmodel.transitionmtrx
+    print transmtrx
+    # print "real obsmtrx"
+    # print exmodel.obsmtrx
+    # print obsmtrx
+    print piedist,transdist,obsdist
+    print "dooshag"
+main()

@@ -19,28 +19,55 @@ def viterbi(transmtrx,obsmtrx,pie,observations):
     Unlike forward backward, considers the most probable sequence given the state for all time points
     not just the optimum state individually for each time point'''
     # initialization
-    numstates = np.shape(transmtrx)[0]
-    timelength = np.shape(observations)[0]
-    deltas = np.empty((timelength,numstates))
-    optzis = np.empty((timelength,1))
-    As = np.empty((timelength,numstates))
-    (deltas[0,:] ,Z) = normalize((np.multiply(obsmtrx[:,int(observations[0])],pie)))
-    otherzero = np.argmax(deltas[0,:])
-    for t in range(1,timelength):
-        # set A here
-        for j in range(numstates):
-            # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-            (normed,Z) = normalize(deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])])
-            # print normed
-            As[t,j] = int(np.argmax(normed))
-            cands = np.empty((numstates,1))
-            for i in range(numstates):
-                cands[i] = deltas[t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[t])])
-            deltas[t,j] = max(cands)
-        (deltas[t,:],Z) = normalize(deltas[t,:])
-    optzis[timelength-1] = int(np.argmax(deltas[timelength-1,:]))
-    for k in range(timelength-2,-1,-1):
-        optzis[k] = As[k+1,int(optzis[k+1])]
+    if len(np.shape(observations)) == 1:
+        numstates = np.shape(transmtrx)[0]
+        timelength = np.shape(observations)[0]
+        deltas = np.empty((timelength,numstates))
+        optzis = np.empty((timelength,1))
+        As = np.empty((timelength,numstates))
+        (deltas[0,:] ,Z) = normalize((np.multiply(obsmtrx[:,int(observations[0])],pie)))
+        otherzero = np.argmax(deltas[0,:])
+        for t in range(1,timelength):
+            # set A here
+            for j in range(numstates):
+                # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
+                (normed,Z) = normalize(deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])])
+                # print normed
+                As[t,j] = int(np.argmax(normed))
+                cands = np.empty((numstates,1))
+                for i in range(numstates):
+                    cands[i] = deltas[t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[t])])
+                deltas[t,j] = max(cands)
+            (deltas[t,:],Z) = normalize(deltas[t,:])
+        optzis[timelength-1] = int(np.argmax(deltas[timelength-1,:]))
+        for k in range(timelength-2,-1,-1):
+            optzis[k] = As[k+1,int(optzis[k+1])]
+    else:
+        numstates = np.shape(transmtrx)[0]
+        timelength = np.shape(observations)[1]
+        numsamples = np.shape(observations)[0]
+        deltas = np.empty((numsamples,timelength,numstates))
+        optzis = np.empty((numsamples,timelength))
+        As = np.empty((timelength,numstates))
+        for sample in range(numsamples):
+            (deltas[sample,0,:] ,Z) = normalize((np.multiply(obsmtrx[:,int(observations[sample,0])],pie)))
+            # otherzero = np.argmax(deltas[sample,0,:])
+            for t in range(1,timelength):
+                # set A here
+                for j in range(numstates):
+                    # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
+                    (normed,Z) = normalize(deltas[sample,t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[sample,t])])
+                    # print normed
+                    As[t,j] = int(np.argmax(normed))
+                    cands = np.empty((numstates,1))
+                    for i in range(numstates):
+                        cands[i] = deltas[sample,t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[sample,t])])
+                    deltas[sample,t,j] = max(cands)
+                (deltas[sample,t,:],Z) = normalize(deltas[sample,t,:])
+            optzis[sample,timelength-1] = int(np.argmax(deltas[sample,timelength-1,:]))
+            for k in range(timelength-2,-1,-1):
+                optzis[sample,k] = As[k+1,int(optzis[k+1])]       
+
     return (optzis,deltas)
 
 # def main():

@@ -16,7 +16,7 @@ class hmmforward(object):
     distribution across all the states for each time point and use that instead
 
 
-     '''
+    '''
     def __init__(self,initnumofstate=5,initnumofobsercases = 10,initpiequality = 1 ,initobserlength = 100, initnumsamples = 1):
         self.numofstates = initnumofstate
         self.numofobsercases = initnumofobsercases
