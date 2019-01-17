@@ -23,7 +23,7 @@ def backward(transmtrx,obsmtrx,pie,observations):
         # print betas[timelength-1,:]
         for t in range(timelength-1,0,-1):
             phi_t = obsmtrx[:,int(observations[t])]
-            (betas[t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))) 
+            # (betas[t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))) 
             # (betas[t-1,:],dummy) = normalize(betas[t-1,:])
         (betas[0,:], doosh) = normalize(betas[0,:])
     else:
@@ -38,7 +38,7 @@ def backward(transmtrx,obsmtrx,pie,observations):
             # print betas[timelength-1,:]
             for t in range(timelength-1,0,-1):
                 phi_t = obsmtrx[:,int(observations[sample,t])]
-                (betas[sample,t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))) 
+                # (betas[sample,t-1,:], dumm) = normalize(np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))) 
                 # (betas[t-1,:],dummy) = normalize(betas[t-1,:])
             (betas[sample,0,:], doosh) = normalize(betas[sample,0,:])
 

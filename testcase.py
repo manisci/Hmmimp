@@ -5,7 +5,8 @@ from forward import forward
 from backward import backward
 from forward_backward import forward_backward
 from Baumwelch import Baumwelch
- 
+np.set_printoptions(precision=4,suppress=True)
+
 
 def main():
     exmodel = hmmforward(2,3,1,20,1)
@@ -22,10 +23,10 @@ def main():
     # print gammas
     # print most_likely_seq
     (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,exmodel)
-    print transmtrx
-    print exmodel.transitionmtrx
-    print obsmtrx
-    print exmodel.obsmtrx
+    # print transmtrx
+    # print exmodel.transitionmtrx
+    # print obsmtrx
+    # print exmodel.obsmtrx
     # (pie,transmtrx,obsmtrx ) =  Baumwelch(observations,numstates,numobscases,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     # piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
