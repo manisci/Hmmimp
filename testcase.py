@@ -33,14 +33,14 @@ def main():
     # transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
     # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
     # print "realpie"
-    # print exmodel.pie
+    # # print exmodel.pie
     # print pie
     # print "realtrans"
-    # print exmodel.transitionmtrx
-    # print transmtrx
+    # # print exmodel.transitionmtrx
+    print transmtrx
     # print "real obsmtrx"
-    # print exmodel.obsmtrx
-    # print obsmtrx
+    # # print exmodel.obsmtrx
+    print obsmtrx
     # print piedist,transdist,obsdist
     # print "dooshag"
 main()

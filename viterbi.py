@@ -36,7 +36,7 @@ def viterbi(transmtrx,obsmtrx,pie,observations):
                 normed = normalize((deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]).reshape(-1,1),norm = 'l1')
                 # print normed
                 As[t,j] = int(np.argmax(normed))
-                cands = eps * np.ones((numstates,1))
+                cands = eps * np.ones((numstates))
                 for i in range(numstates):
                     cands[i] = deltas[t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[t])])
                 deltas[t,j] = max(cands)
@@ -61,7 +61,7 @@ def viterbi(transmtrx,obsmtrx,pie,observations):
                     normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[sample,t])]).reshape(-1,1),norm = 'l1')
                     # print normed
                     As[t,j] = int(np.argmax(normed))
-                    cands = eps * np.ones((numstates,1))
+                    cands = eps * np.ones((numstates))
                     for i in range(numstates):
                         cands[i] = deltas[sample,t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[sample,t])])
                     deltas[sample,t,j] = max(cands)

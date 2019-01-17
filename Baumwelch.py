@@ -255,7 +255,7 @@ def initializeparameters_closetoreality(observations,numstates,numobscases,numsa
     
 def E_step(pie,transmtrx,obsmtrx,observations):
     eps = 2.22044605e-16
-    (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis) = \
+    (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis,logobservations) = \
     forward_backward(transmtrx,obsmtrx,pie,observations)
     # print " in E step after forward backward"
     # print np.shape(gammas)    
@@ -272,7 +272,10 @@ def E_step(pie,transmtrx,obsmtrx,observations):
                 for q in range(numstate):
                     for s in range(numstate):
                         kissies[sample,t,q,s] = float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsmtrx[s,int(observations[sample,t+1])] * betas[sample,t+1,s])
-                kissies[sample,t,:,:] = normalize(kissies[sample,t,:,:],norm = 'l1')
+                kissies[sample,t,:,:] /= (np.sum(kissies[sample,t,:,:]))
+        for sample in range(numsamples):
+            kissies[sample,timelength-1,:,:] /= np.sum(kissies[sample,timelength-1,:,:])
+        
         # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
     else:
         timelength = np.shape(observations)[0]
@@ -286,11 +289,14 @@ def E_step(pie,transmtrx,obsmtrx,observations):
             for q in range(numstate):
                 for s in range(numstate):
                     kissies[t,q,s] = float(alphas[t,q]) * float(transmtrx[q,s]) * float(obsmtrx[s,int(observations[t+1])] * betas[t+1,s])
-            kissies[t,:,:] = normalize(kissies[t,:,:],norm = 'l1')
+            kissies[t,:,:] /= np.sum(kissies[t,:,:])
+        kissies[timelength-1,:,:] /= np.sum(kissies[timelength-1,:,:])
+        # print "kissies"
+        # print kissies[timelength-1,:,:] 
         # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
     # print " In E step after clipping "
     # print np.shape(gammas)
-    return (gammas,kissies)
+    return (gammas,kissies,logobservations)
 
 def M_step(gammas,kissies,numobscases,observations):
     eps = 2.22044605e-16
@@ -310,7 +316,7 @@ def M_step(gammas,kissies,numobscases,observations):
         for state in range(numstate):
             denom = np.sum(gammas[:,:,state])
             for obs in range(numobscases):
-                numerator = 0.0
+                numerator = eps
                 for time in range(timelength):
                     for sample in range(numsamples):
                         if int(observations[sample,time]) == obs:
@@ -333,13 +339,13 @@ def M_step(gammas,kissies,numobscases,observations):
         for state in range(numstate):
             denom = np.sum(gammas[:,state])
             for obs in range(numobscases):
-                numerator = 0.0
+                numerator = eps
                 for time in range(timelength):
                     if int(observations[time]) == obs:
                         # print "here"
                         numerator += gammas[time,state]
                 newobsmtrx[state,obs] = float(numerator) / float(denom)
-    (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
+    # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
 
 def Baumwelch(observations,numstates,numobscases,exmodel = None):
@@ -373,8 +379,10 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     noiterations = 20
     conv_threshold = 0.001
     diff_consec_params = 100
-    # (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis) = \
-    # forward_backward(transmtrx,obsmtrx,pie,observations)
+    likelihoods = []
+    (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis,logobservations) = \
+    forward_backward(transmtrx,obsmtrx,pie,observations)
+    likelihoods.append(logobservations)
     # print log_prob_most_likely_seq
     # print "initial log likelihood is "
     # print log_prob_most_likely_seq
@@ -393,20 +401,23 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     counter = 0
     # print "should be getting smaller"
     # print "log likelihood value"
-    likelihoods = []
     while(counter < noiterations):
         # print "be differnt old:"
         # print transmtrx
-        (gammas,kissies) = E_step(pie,transmtrx,obsmtrx,observations)
+        prevpie = np.copy(pie)
+        prevobsmtrx = np.copy(obsmtrx)
+        prevtransmtrx = np.copy(transmtrx)
+        (gammas,kissies,logobservations) = E_step(pie,transmtrx,obsmtrx,observations)
         # print "befpre clipping"
         # print np.shape(gammas)
         # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
         # print "after clipping"
         # print np.shape(gammas)
-        prevpie = np.copy(pie)
-        prevobsmtrx = np.copy(obsmtrx)
-        prevtransmtrx = np.copy(transmtrx)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,numobscases,observations)
+
+        # print "updated transition matrix at this point is"
+        # print transmtrx
+        # print gammas
         # print "after m steps"
         # print np.shape(gammas)I'm in the right  place
 
@@ -418,9 +429,9 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
         # print "one iteration is done now for the fun part calculation of likelihood"
         # print "gammas are"
         # print gammas
-        curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
-        print curloglikelihood
-        likelihoods.append(curloglikelihood)
+        # curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
+        # print curloglikelihood
+        likelihoods.append(logobservations)
         piedist = np.linalg.norm(pie - prevpie ) / float(numstates)
         transdist = np.linalg.norm(transmtrx - prevtransmtrx) / float(numstates **2)
         obsdist = np.linalg.norm(obsmtrx - prevobsmtrx) / float(numobscases * numstates)
@@ -453,7 +464,10 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     #     prob *= deltas[i,Optstate[i][0]]
     # print prob
     title = "likelihoodtrand.png"
-    plt.plot(range(noiterations),likelihoods)
+    maxlikelihood = max(likelihoods)
+    likelihoods = [item+maxlikelihood for item in likelihoods]
+    print likelihoods
+    plt.plot(range(noiterations+1),likelihoods)
     plt.savefig(title)
     
     return (pie,transmtrx,obsmtrx) 
@@ -470,7 +484,7 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
 #     obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
 #     print "realpie"
 #     print exmodel.pie
-#     print pie
+    # print pie
 #     print "realtrans"
 #     print exmodel.transitionmtrx
 #     print transmtrx

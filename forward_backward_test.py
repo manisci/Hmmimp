@@ -24,7 +24,7 @@ def test_foward_backward(nums,numobscase,piequality,numobservs):
     hmmexample = hmmforward(nums,numobscase,piequality,numobservs,1)
     timelength = np.shape(hmmexample.observations)[0]
     gammas = np.empty((timelength,nums))
-    (alphas,log_prob_most_likely_seq,most_likely_seq,Zis) = forward(hmmexample.transitionmtrx,hmmexample.obsmtrx,hmmexample.pie,hmmexample.observations)
+    (alphas,log_prob_most_likely_seq,most_likely_seq,Zis,logobservations) = forward(hmmexample.transitionmtrx,hmmexample.obsmtrx,hmmexample.pie,hmmexample.observations)
     betas = backward(hmmexample.transitionmtrx,hmmexample.obsmtrx,hmmexample.pie,hmmexample.observations)
     Zis = np.empty((timelength,1))
     most_likely_seq = np.empty((timelength,1))

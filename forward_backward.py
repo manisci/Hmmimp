@@ -70,13 +70,14 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
         timelength = np.shape(observations)[1]
         numsamples = np.shape(observations)[0]
         gammas = eps * np.ones((numsamples,timelength,numstates))
-        (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis) = forward(transmtrx,obsmtrx,pie,observations)
+        (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis,logobservations) = forward(transmtrx,obsmtrx,pie,observations)
         betas = backward(transmtrx,obsmtrx,pie,observations)
         Zis = eps * np.ones((numsamples,timelength))
         most_likely_seq = eps * np.ones((numsamples,timelength))
-        log_prob_most_likely_seq = eps * np.ones((numsamples,1))
-        for i in range(timelength):
-            betas[i,:] /= float(Ziis[i])
+        log_prob_most_likely_seq = eps * np.ones((numsamples))
+        for sample in range(numsamples):
+            for i in range(timelength):
+                betas[sample,i,:] /= float(Ziis[sample,i])
         for sample in range(numsamples):
             for t in range(timelength):
                 gammas[sample,t,:] = normalize(np.multiply(alphas[sample,t,:],betas[sample,t,:]).reshape(1, -1),norm = 'l1')
@@ -90,7 +91,7 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
         # print "time length is "
         # print timelength
         gammas = eps *  np.ones((timelength,numstates))
-        (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis) = forward(transmtrx,obsmtrx,pie,observations)
+        (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis,logobservations) = forward(transmtrx,obsmtrx,pie,observations)
         betas = backward(transmtrx,obsmtrx,pie,observations)
         Zis = eps * np.ones(timelength)
         most_likely_seq = eps * np.ones(timelength)
@@ -104,7 +105,7 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
         log_prob_most_likely_seq = np.sum(np.log(Zis[:]))
 
 
-    return (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis)
+    return (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations)
 
 # def main():
 #     exmodel = hmmforward(5,10,2,50)

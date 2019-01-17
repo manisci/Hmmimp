@@ -32,8 +32,9 @@ def forward(transmtrx,obsmtrx,pie,observations):
             phi_t = obsmtrx[:,int(observations[t])]
             alphas[t,:] = np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:])))
             most_likely_seq[t] = np.argmax(alphas[t,:])
-        # # print "likelihood at this stage is "
-        # print np.sum(alphas[timelength-1,:])
+        # print "likelihood at this stage is "
+        logobservations = np.sum(alphas[timelength-1,:])
+        print logobservations
         for time in range(timelength):
             Zis[time] = np.sum(alphas[time,:])
             alphas[time,:]= normalize(alphas[time,:].reshape(1, -1),norm = 'l1')
@@ -46,7 +47,8 @@ def forward(transmtrx,obsmtrx,pie,observations):
         Zis =  eps * np.ones((numsamples,timelength))
         most_likely_seq = eps * np.ones((numsamples,timelength))
         alphas = eps * np.ones((numsamples,timelength,numstates))
-        log_prob_most_likely_seq = eps * np.ones((numsamples,1))
+        log_prob_most_likely_seq = eps * np.ones((numsamples))
+        logobservations = np.empty(numsamples)
         for sample in range(numsamples):
             phi0 = obsmtrx[:,int(observations[sample,0])]
             alphas[sample,0,:] = np.multiply(phi0,pie)
@@ -58,11 +60,12 @@ def forward(transmtrx,obsmtrx,pie,observations):
             log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]) + 2.22044604925e-16 )
         for sample in range(numsamples):
             print "likelihood at this stage for sample " + str(sample) + "is"
-            print np.sum(alphas[sample,timelength-1,:])
+            logobservations[sample] = np.sum(alphas[sample,timelength-1,:])
+            print logobservations[sample]
             for time in range(timelength):
                 Zis[sample,time] = np.sum(alphas[sample,t,:])
                 alphas[sample,t,:] = normalize(alphas[sample,t,:].reshape(1, -1) ,norm = 'l1')
-    return (alphas,log_prob_most_likely_seq,most_likely_seq,Zis)
+    return (alphas,log_prob_most_likely_seq,most_likely_seq,Zis,logobservations)
 
 
 
