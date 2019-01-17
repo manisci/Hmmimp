@@ -17,13 +17,14 @@ def forward(transmtrx,obsmtrx,pie,observations):
     also most likely sequence of staets and its associated probabilies
     Used the equations in Machine learning a probabilistic appraoch, Kevin Murphy
     '''
+    eps = 2.22044605e-16
     # initialization
     if len(np.shape(observations)) == 1 :
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
-        Zis =  np.empty((timelength,1))
-        most_likely_seq = np.empty((timelength,1))
-        alphas = np.empty((timelength,numstates))
+        Zis =  eps * np.ones((timelength))
+        most_likely_seq = eps * np.ones((timelength))
+        alphas = eps * np.ones((timelength,numstates))
         phi0 = obsmtrx[:,int(observations[0])]
         (alphas[0,:]) = (np.multiply(phi0,pie)) 
         most_likely_seq[0] = np.argmax(alphas[0,:])
@@ -31,8 +32,8 @@ def forward(transmtrx,obsmtrx,pie,observations):
             phi_t = obsmtrx[:,int(observations[t])]
             alphas[t,:] = np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:])))
             most_likely_seq[t] = np.argmax(alphas[t,:])
-        # print "likelihood at this stage is "
-        print np.sum(alphas[timelength-1,:])
+        # # print "likelihood at this stage is "
+        # print np.sum(alphas[timelength-1,:])
         for time in range(timelength):
             Zis[time] = np.sum(alphas[time,:])
             alphas[time,:]= normalize(alphas[time,:].reshape(1, -1),norm = 'l1')
@@ -42,10 +43,10 @@ def forward(transmtrx,obsmtrx,pie,observations):
         numsamples = np.shape(observations)[0]
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[1]
-        Zis =  np.empty((numsamples,timelength))
-        most_likely_seq = np.empty((numsamples,timelength))
-        alphas = np.empty((numsamples,timelength,numstates))
-        log_prob_most_likely_seq = np.empty((numsamples,1))
+        Zis =  eps * np.ones((numsamples,timelength))
+        most_likely_seq = eps * np.ones((numsamples,timelength))
+        alphas = eps * np.ones((numsamples,timelength,numstates))
+        log_prob_most_likely_seq = eps * np.ones((numsamples,1))
         for sample in range(numsamples):
             phi0 = obsmtrx[:,int(observations[sample,0])]
             alphas[sample,0,:] = np.multiply(phi0,pie)

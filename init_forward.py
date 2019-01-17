@@ -14,9 +14,9 @@ class hmmforward(object):
     You can convert the observations and obsmtrx all together into one matrix
     called soft evidence which is a K * T matrix by using the corresponding
     distribution across all the states for each time point and use that instead
-
-
     '''
+
+    
     def __init__(self,initnumofstate=5,initnumofobsercases = 10,initpiequality = 1 ,initobserlength = 100, initnumsamples = 1):
         self.numofstates = initnumofstate
         self.numofobsercases = initnumofobsercases
@@ -27,26 +27,27 @@ class hmmforward(object):
         self.generateobsmtrx()
         self.generatetransitionmtrx()
         self.generateobservations()
+        # 2.22044604925e-16 = 2.22044604925e-16
         # self.transitionmtrxpriors = transitionmtrxpriors  # what to do if i don't have the num of states yet? 
     def generatepie(self):
         self.pie = np.random.dirichlet(np.ones(self.numofstates) * self.piequality,size=1)[0]
     def generateobsmtrx(self):
         # used dirchlet distribution adding up to one for probabiliteis of  obervations in a single state
-        self.obsmtrx = np.empty((self.numofstates,self.numofobsercases))
+        self.obsmtrx = 2.22044604925e-16 * np.ones((self.numofstates,self.numofobsercases))
         self.obsmtrxpriors = np.random.randint(1,self.numofstates+1,size = self.numofobsercases)
         for i in range(self.numofstates):
             (self.obsmtrx)[i,:] = np.random.dirichlet(np.ones(self.numofobsercases) / self.obsmtrxpriors[i],size=1)[0]
     def generatetransitionmtrx(self):
         # used dirchlet distribution adding up to one, for probabiliteis of transition in a state
-        self.transitionmtrx = np.empty((self.numofstates,self.numofstates))
+        self.transitionmtrx = 2.22044604925e-16 * np.ones((self.numofstates,self.numofstates))
         self.transitionmtrxpriors = np.random.randint(1,self.numofstates+1 ,size = self.numofstates)
         for i in range(self.numofstates):
             (self.transitionmtrx)[i,:] = np.random.dirichlet(np.ones(self.numofstates) / self.transitionmtrxpriors[i],size=1)[0]
     def generateobservations(self):
         # uses numsamples, numobscases, time length, and initial probability and transition matrix and obsmtrx to generate sequence of states and observations
         if self.numsamples == 1:
-            self.observations = np.empty((self.obserlength),dtype = numpy.int8)
-            self.seqofstates = np.empty((self.obserlength))
+            self.observations = 2.22044604925e-16 *np.ones((self.obserlength),dtype = numpy.int8)
+            self.seqofstates = 2.22044604925e-16 *np.ones((self.obserlength))
             # available choices for states and setting the initial state based on pie
             elements = range(self.numofstates)
             initialstate = np.random.choice(elements, 1, p=self.pie)[0]
@@ -66,8 +67,8 @@ class hmmforward(object):
                 (self.seqofstates)[i] = (nextstate)
                 prevstate = nextstate
         else:
-            self.observations = np.empty((self.numsamples,self.obserlength),dtype = numpy.int8)
-            self.seqofstates = np.empty((self.numsamples,self.obserlength))
+            self.observations = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength),dtype = numpy.int8)
+            self.seqofstates = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength))
             for samnum in range(self.numsamples):
                 elements = range(self.numofstates)
                 initialstate = np.random.choice(elements, 1, p=self.pie)[0]

@@ -63,17 +63,18 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
     also most likely sequence of staets and its associated probabilies
     '''
     # initialization
+    eps = 2.22044604925e-16
     if len(np.shape(observations)) == 2:
         print "I'm in the wrong  place"
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[1]
         numsamples = np.shape(observations)[0]
-        gammas = np.empty((numsamples,timelength,numstates))
+        gammas = eps * np.ones((numsamples,timelength,numstates))
         (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis) = forward(transmtrx,obsmtrx,pie,observations)
         betas = backward(transmtrx,obsmtrx,pie,observations)
-        Zis = np.zeros((numsamples,timelength))
-        most_likely_seq = np.empty((numsamples,timelength))
-        log_prob_most_likely_seq = np.empty((numsamples,1))
+        Zis = eps * np.ones((numsamples,timelength))
+        most_likely_seq = eps * np.ones((numsamples,timelength))
+        log_prob_most_likely_seq = eps * np.ones((numsamples,1))
         for i in range(timelength):
             betas[i,:] /= float(Ziis[i])
         for sample in range(numsamples):
@@ -88,11 +89,11 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
         timelength = np.shape(observations)[0]
         # print "time length is "
         # print timelength
-        gammas = np.empty((timelength,numstates))
+        gammas = eps *  np.ones((timelength,numstates))
         (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis) = forward(transmtrx,obsmtrx,pie,observations)
         betas = backward(transmtrx,obsmtrx,pie,observations)
-        Zis = np.zeros((timelength))
-        most_likely_seq = np.empty((timelength))
+        Zis = eps * np.ones(timelength)
+        most_likely_seq = eps * np.ones(timelength)
         for i in range(timelength):
             betas[i,:] /= float(Ziis[i])
         for t in range(timelength):

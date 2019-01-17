@@ -7,6 +7,9 @@ from forward_backward import forward_backward
 from viterbi import viterbi
 import itertools
 from sklearn.preprocessing import normalize
+import matplotlib 
+matplotlib.use("Agg") 
+import matplotlib.pyplot as plt
 np.set_printoptions(precision=4,suppress=True)
 
 
@@ -41,6 +44,7 @@ np.set_printoptions(precision=4,suppress=True)
 #     return firstelemsum + secondelemsum + thirdelemsum
 
 def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
+    eps = 2.22044604925e-16
     numobscases = np.shape(obsmtrx)[1]
     if len(np.shape(observations)) == 1:
         timelength = np.shape(observations)[0]
@@ -48,13 +52,13 @@ def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
         timelength = np.shape(observations)[1]
     nstates = np.shape(obsmtrx)[0] 
     Z = list(itertools.product(range(nstates),repeat = timelength))
-    firstelemsum = 0.0
-    secondelemsum = 0.0
-    thirdelemsum = 0.0
+    firstelemsum = eps
+    secondelemsum = eps
+    thirdelemsum = eps
     for z in Z:
         thirdelem = 1.0
-        secpmdsum = 0.0
-        thirdsum = 0.0
+        secpmdsum = eps
+        thirdsum = eps
         for time in range(1,timelength):
             thirdelem *= (float(transmtrx[z[time-1],z[time]]) * obsmtrx[z[time],int(observations[time])])
             secpmdsum += np.log(transmtrx[z[time-1] , z[time]])
@@ -215,6 +219,7 @@ def clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx):
 #     return (v,Z)
 
 def initializeparameters(observations,numstates,numobscases,numsamples):
+    eps = 2.22044605e-16
     obscounts = [0] * numobscases
     if numsamples == 1:
         timelength = np.shape(observations)[0]
@@ -228,26 +233,28 @@ def initializeparameters(observations,numstates,numobscases,numsamples):
 
     obsprobs = np.array([float(item)/ float(numsamples * timelength) for item in obscounts])
     pie = np.random.dirichlet(np.ones(numstates),size=1)[0]
-    transmtrx = np.empty((numstates,numstates))
+    transmtrx = eps * np.ones((numstates,numstates))
     for i in range(numstates):
         transmtrx[i,:] = np.random.dirichlet(np.ones(numstates),size=1)[0]
-    obsmtrx = np.empty((numstates,numobscases))
+    obsmtrx = eps * np.ones((numstates,numobscases))
     for i in range(numstates):
         obsmtrx[i,:] = normalize((obsprobs + abs(np.random.normal(0,1,numobscases))).reshape(1, -1),norm = 'l1')
     return (pie,transmtrx,obsmtrx)
 
 def initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel):
+    eps = 2.22044605e-16
     scale = 0.5
     (pie) = normalize((exmodel.pie + abs(np.random.normal(0,scale,numstates))).reshape(1, -1),norm = 'l1')
-    transmtrx = np.empty((numstates,numstates))
+    transmtrx = eps * np.ones ((numstates,numstates))
     for i in range(numstates):
         transmtrx[i,:] = normalize((exmodel.transitionmtrx[i,:] + abs(np.random.normal(0,scale,numstates))).reshape(1, -1),norm = 'l1')
-    obsmtrx = np.empty((numstates,numobscases))
+    obsmtrx = eps * np.ones((numstates,numobscases))
     for j in range(numstates):
         obsmtrx[j,:] = normalize((exmodel.obsmtrx[j,:] + abs(np.random.normal(0,scale,numobscases))).reshape(1, -1),norm = 'l1')
     return (pie,transmtrx,obsmtrx)
     
 def E_step(pie,transmtrx,obsmtrx,observations):
+    eps = 2.22044605e-16
     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis) = \
     forward_backward(transmtrx,obsmtrx,pie,observations)
     # print " in E step after forward backward"
@@ -259,7 +266,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
         timelength = np.shape(observations)[1]
         numsamples = np.shape(observations)[0]
         numstate = np.shape(transmtrx)[0]
-        kissies = np.empty((numsamples,timelength,numstate,numstate))
+        kissies = eps * np.ones((numsamples,timelength,numstate,numstate))
         for sample in range(numsamples):
             for t in range(timelength-1):
                 for q in range(numstate):
@@ -274,7 +281,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
         #     (betas[time,:],dumak) = normalize(betas[time,:])
             # alphas[time,:] /= float(np.sum(alphas[time,:]))
         numstate = np.shape(transmtrx)[0]
-        kissies = np.empty((timelength,numstate,numstate))
+        kissies = eps * np.ones((timelength,numstate,numstate))
         for t in range(timelength-1):
             for q in range(numstate):
                 for s in range(numstate):
@@ -286,13 +293,14 @@ def E_step(pie,transmtrx,obsmtrx,observations):
     return (gammas,kissies)
 
 def M_step(gammas,kissies,numobscases,observations):
+    eps = 2.22044605e-16
     if len(np.shape(observations)) == 2:
         numstate = np.shape(gammas)[2]
         timelength = np.shape(gammas)[1]
-        newpie = np.empty((numstate))
-        newtransmtrx =np.empty((numstate,numstate))
-        newobsmtrx = np.empty((numstate,numobscases))
-        numsamples = np.shape(gammas)[0]
+        newpie = eps *np.ones((numstate))
+        newtransmtrx = eps * np.ones((numstate,numstate))
+        newobsmtrx = eps * np.ones((numstate,numobscases))
+        numsamples = eps * np.shape(gammas)[0]
         for i in range(numstate):
             newpie[i] = np.mean((gammas[:,0,i]))
         for q in range(numstate):
@@ -313,9 +321,9 @@ def M_step(gammas,kissies,numobscases,observations):
         # single observation
         numstate = np.shape(gammas)[1]
         timelength = np.shape(gammas)[0]
-        newpie = np.empty((numstate))
-        newtransmtrx =np.empty((numstate,numstate))
-        newobsmtrx = np.empty((numstate,numobscases))
+        newpie = eps * np.ones((numstate))
+        newtransmtrx = eps * np.ones((numstate,numstate))
+        newobsmtrx = eps * np.ones((numstate,numobscases))
         for i in range(numstate):
             newpie[i] = float((gammas[0,i]))
         for q in range(numstate):
@@ -385,6 +393,7 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     counter = 0
     # print "should be getting smaller"
     # print "log likelihood value"
+    likelihoods = []
     while(counter < noiterations):
         # print "be differnt old:"
         # print transmtrx
@@ -409,8 +418,9 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
         # print "one iteration is done now for the fun part calculation of likelihood"
         # print "gammas are"
         # print gammas
-        # curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
-        # print curloglikelihood
+        curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
+        print curloglikelihood
+        likelihoods.append(curloglikelihood)
         piedist = np.linalg.norm(pie - prevpie ) / float(numstates)
         transdist = np.linalg.norm(transmtrx - prevtransmtrx) / float(numstates **2)
         obsdist = np.linalg.norm(obsmtrx - prevobsmtrx) / float(numobscases * numstates)
@@ -442,6 +452,10 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     # for i in range(len(Optstate)):
     #     prob *= deltas[i,Optstate[i][0]]
     # print prob
+    title = "likelihoodtrand.png"
+    plt.plot(range(noiterations),likelihoods)
+    plt.savefig(title)
+    
     return (pie,transmtrx,obsmtrx) 
 
 # def main():
