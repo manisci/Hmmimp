@@ -27,20 +27,20 @@ def viterbi(transmtrx,obsmtrx,pie,observations):
         deltas = eps * np.ones((timelength,numstates))
         optzis = eps * np.ones((timelength))
         As = eps * np.ones((timelength,numstates))
-        deltas[0,:] = normalize((np.multiply(obsmtrx[:,int(observations[0])],pie)).reshape(-1,1),norm = 'l1')
-        otherzero = np.argmax(deltas[0,:])
+        # .reshape(-1,1)
+        deltas[0,:] = normalize((np.multiply(obsmtrx[:,int(observations[0])],pie)).reshape(1, -1),norm = 'l1')
         for t in range(1,timelength):
             # set A here
             for j in range(numstates):
                 # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-                normed = normalize((deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]).reshape(-1,1),norm = 'l1')
+                normed = normalize((deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]).reshape(1, -1),norm = 'l1')
                 # print normed
                 As[t,j] = int(np.argmax(normed))
                 cands = eps * np.ones((numstates))
                 for i in range(numstates):
                     cands[i] = deltas[t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[t])])
                 deltas[t,j] = max(cands)
-            (deltas[t,:],Z) = normalize(deltas[t,:].reshape(-1,1),norm = 'l1')
+            deltas[t,:] = normalize(deltas[t,:].reshape(1, -1),norm = 'l1')
         optzis[timelength-1] = int(np.argmax(deltas[timelength-1,:]))
         for k in range(timelength-2,-1,-1):
             optzis[k] = As[k+1,int(optzis[k+1])]
@@ -50,25 +50,25 @@ def viterbi(transmtrx,obsmtrx,pie,observations):
         numsamples = np.shape(observations)[0]
         deltas = eps * np.ones((numsamples,timelength,numstates))
         optzis = eps *np.ones((numsamples,timelength))
-        As = eps * np.ones((timelength,numstates))
+        As = eps * np.ones((numsamples,timelength,numstates))
         for sample in range(numsamples):
-            deltas[sample,0,:]  = normalize((np.multiply(obsmtrx[:,int(observations[sample,0])],pie)).reshape(-1,1),norm = 'l1')
+            deltas[sample,0,:]  = normalize((np.multiply(obsmtrx[:,int(observations[sample,0])],pie)).reshape(1, -1),norm = 'l1')
             # otherzero = np.argmax(deltas[sample,0,:])
             for t in range(1,timelength):
                 # set A here
                 for j in range(numstates):
                     # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-                    normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[sample,t])]).reshape(-1,1),norm = 'l1')
+                    normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[sample,t])]).reshape(1, -1),norm = 'l1')
                     # print normed
-                    As[t,j] = int(np.argmax(normed))
+                    As[sample,t,j] = int(np.argmax(normed))
                     cands = eps * np.ones((numstates))
                     for i in range(numstates):
                         cands[i] = deltas[sample,t-1,i] *(transmtrx[i,j]) *(obsmtrx[j,int(observations[sample,t])])
                     deltas[sample,t,j] = max(cands)
-                deltas[sample,t,:] = normalize(deltas[sample,t,:].reshape(-1,1),norm = 'l1')
+                deltas[sample,t,:] = normalize(deltas[sample,t,:].reshape(1, -1),norm = 'l1')
             optzis[sample,timelength-1] = int(np.argmax(deltas[sample,timelength-1,:]))
             for k in range(timelength-2,-1,-1):
-                optzis[sample,k] = As[k+1,int(optzis[k+1])]       
+                optzis[sample,k] = As[sample,k+1,int(optzis[sample,k+1])]       
 
     return (optzis,deltas)
 

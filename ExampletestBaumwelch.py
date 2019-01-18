@@ -9,20 +9,22 @@ np.set_printoptions(precision=4,suppress=True)
 
 
 def main():
-    exmodel = hmmforward(2,3,1,20,1)
-    exmodel.pie = np.array([0.5,0.5])
-    exmodel.transitionmtrx = np.array([[.5,.5],[.5,.5]])
-    exmodel.obsmtrx = np.array([[.4,.1,.5],[.1,.5,.4]])
-    numstates = exmodel.numofstates
-    numobscases = exmodel.numofobsercases
+    # exmodel = hmmforward(2,3,1,20,1)
+    # exmodel.pie = np.array([0.5,0.5])
+    # exmodel.transitionmtrx = np.array([[.5,.5],[.5,.5]])
+    # exmodel.obsmtrx = np.array([[.4,.1,.5],[.1,.5,.4]])
+    numstates = 2
+    numobscases = 3
+    # numstates = exmodel.numofstates
+    # numobscases = exmodel.numofobsercases
     observations = np.array([2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1])
-    transmtrx = exmodel.transitionmtrx
-    obsmtrx = exmodel.obsmtrx
-    pie = exmodel.pie
+    # transmtrx = exmodel.transitionmtrx
+    # obsmtrx = exmodel.obsmtrx
+    # pie = exmodel.pie
     # (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis) = forward_backward(transmtrx,obsmtrx,pie,observations)
     # print gammas
     # print most_likely_seq
-    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,exmodel)
+    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases)
     # print transmtrx
     # print exmodel.transitionmtrx
     # print obsmtrx
