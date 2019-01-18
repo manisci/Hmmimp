@@ -10,7 +10,7 @@ from sklearn.preprocessing import normalize
 import matplotlib 
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
-np.set_printoptions(precision=4,suppress=True)
+# np.set_printoptions(precision=4,suppress=True)
 
 
 # def computeloglikelihoodd(pie,transmtrx,obsmtrx,observations):
@@ -349,7 +349,14 @@ def M_step(gammas,kissies,numobscases,observations):
     return (newpie,newtransmtrx,newobsmtrx)
 
 def Baumwelch(observations,numstates,numobscases,exmodel = None):
-    ''' exmodel is only used for initializations close to reality'''
+    eps = 2.22044605e-16
+    ''' Uses an EM moedel and maximul likelihood estimation to learn the parameteres of an HMM model given the observations 
+    In order to compute log likelihood, probabilitey of seeing the observations given the model at that iteration is used. 
+    For convergence purposes, the updating continues till the maximum value of difference between 
+    previous iteration likelihood and current iteartion likelihood among all samples is smaller than machine epsilon.
+    Inputs : observations,numstates,numobscases
+    Output: Learned parameteters, pie,transmtrx,obsmtrx
+    ** Note: exmodel is only used for initializations close to reality. '''
     # print "this should be increasing"
     # print "timelength"
     # print timelength
@@ -360,8 +367,8 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
         numsamples = 1
 
     # initialization
-    # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numobscases,numsamples)
-    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
+    (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numobscases,numsamples)
+    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numobscases,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     # print "realpie"
     # print exmodel.pie
@@ -382,6 +389,14 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     likelihoods = []
     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis,logobservations) = \
     forward_backward(transmtrx,obsmtrx,pie,observations)
+    # print "initial log likelihoods is"
+    # print logobservations
+    print "initial pie is"
+    print pie
+    print "initial tran mtrx is"
+    print transmtrx
+    print "initial obs mtrx is "
+    print obsmtrx
     # likelihoods.append(logobservations)
     # print log_prob_most_likely_seq
     # print "initial log likelihood is "
@@ -401,9 +416,15 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     counter = 0
     # print "should be getting smaller"
     # print "log likelihood value"
-    while(counter < noiterations):
+    diffprobproduct = 1.0
+    if numsamples == 1:
+        prevlogobservation = 2.0
+    else:
+        prevlogobservation = [2.0] * numsamples
+    while(diffprobproduct > eps):
         # print "be differnt old:"
         # print transmtrx
+       
         prevpie = np.copy(pie)
         prevobsmtrx = np.copy(obsmtrx)
         prevtransmtrx = np.copy(transmtrx)
@@ -429,7 +450,7 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
         # print "one iteration is done now for the fun part calculation of likelihood"
         # print "gammas are"
         # print gammas
-        # curloglikelihood = computeloglikelihoodnew(pie,transmtrx,obsmtrx,observations)
+        # curloglikelihood = computeloglikelihood(pie,transmtrx,obsmtrx,observations)
         # print curloglikelihood
         likelihoods.append(logobservations)
         piedist = np.linalg.norm(pie - prevpie ) / float(numstates)
@@ -441,7 +462,9 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
         piedistak = float(np.linalg.norm(pie - exmodel.pie ) )/ float(numstates)
         transdistak = float(np.sqrt(np.sum((transmtrx - exmodel.transitionmtrx)**2)) )/ float(numstates * numstates)
         obsdistak = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
-
+        diffprobproduct = abs(np.max(prevlogobservation - logobservations))
+        print diffprobproduct
+        prevlogobservation = logobservations
         # print piedistak
         # print transdistak
         # print obsdistak
@@ -463,17 +486,18 @@ def Baumwelch(observations,numstates,numobscases,exmodel = None):
     # for i in range(len(Optstate)):
     #     prob *= deltas[i,Optstate[i][0]]
     # print prob
-    title = "likelihoodtrand.png"
+    title = "likelihoodtrend.png"
     # maxlikelihood = max(likelihoods)
     # likelihoods = [item+maxlikelihood for item in likelihoods]
     print likelihoods
-    plt.plot(range(noiterations),likelihoods)
+    plt.plot(range(counter),likelihoods)
+   
     plt.savefig(title)
     
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmforward(3,5,1,20,1)
+    exmodel = hmmforward(2,3,1,30,3)
     numstates = exmodel.numofstates
     numobscases = exmodel.numofobsercases
     observations = exmodel.observations
@@ -482,15 +506,17 @@ def main():
     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
     obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float(numobscases * numstates)
-    print "realpie"
+    print "realpie is "
     print exmodel.pie
+    print "estimated pie is"
     print pie
     print "realtrans"
     print exmodel.transitionmtrx
+    print "estimated transition matrix is"
     print transmtrx
     print "real obsmtrx"
     print exmodel.obsmtrx
+    print "estimated observation matrix is"
     print obsmtrx
-    print piedist,transdist,obsdist
-    print "dooshag"
+
 main()

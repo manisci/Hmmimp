@@ -34,7 +34,7 @@ def forward(transmtrx,obsmtrx,pie,observations):
             most_likely_seq[t] = np.argmax(alphas[t,:])
         # print "likelihood at this stage is "
         logobservations = np.sum(alphas[timelength-1,:])
-        print logobservations
+        # print logobservations
         for time in range(timelength):
             Zis[time] = np.sum(alphas[time,:])
             alphas[time,:]= normalize(alphas[time,:].reshape(1, -1),norm = 'l1')
@@ -59,9 +59,9 @@ def forward(transmtrx,obsmtrx,pie,observations):
                 most_likely_seq[sample,t] = np.argmax(alphas[sample,t,:])
             log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]) + 2.22044604925e-16 )
         for sample in range(numsamples):
-            print "likelihood at this stage for sample " + str(sample) + "is"
+            # print "likelihood at this stage for sample " + str(sample) + "is"
             logobservations[sample] = np.sum(alphas[sample,timelength-1,:])
-            print logobservations[sample]
+            # print logobservations[sample]
             for time in range(timelength):
                 Zis[sample,time] = np.sum(alphas[sample,t,:])
                 alphas[sample,t,:] = normalize(alphas[sample,t,:].reshape(1, -1) ,norm = 'l1')

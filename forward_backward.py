@@ -65,7 +65,7 @@ def forward_backward(transmtrx,obsmtrx,pie,observations):
     # initialization
     eps = 2.22044604925e-16
     if len(np.shape(observations)) == 2:
-        print "I'm in the wrong  place"
+        # print "I'm in the wrong  place"
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[1]
         numsamples = np.shape(observations)[0]
