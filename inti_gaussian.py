@@ -1,7 +1,7 @@
 import numpy as np,numpy.random
 
 
-class hmmforward(object):
+class hmmgaussian(object):
     ''' Initializes a completely known continuous observation Discreste states HMM model, prior probablities vector over states,
      transition matrix between states, observation matrix of size numstates by 2 showing mean and variance of the gaussian in each state, generates a sequence of states based on pi and transition
      matrix, and then using that and  observation mus and sigmas generates the sequence of observations itself.
@@ -36,7 +36,7 @@ class hmmforward(object):
         self.obsmtrxvarpriors = np.random.permutation(range(1,self.numofstates+1))
         for i in range(self.numofstates):
             (self.obsmtrx)[i,0] = np.random.normal(1.0 / self.obsmtrxmeanpriors[i],1.0 / self.obsmtrxvarpriors[i],size=1)
-            (self.obsmtrx)[i,1] = abs(np.random.normal(self.obsmtrxmeanpriors[i] + (1.0 / self.obsmtrxmeanpriors[i]), self.obsmtrxvarpriors[i] + 1.0 / self.obsmtrxvarpriors[i],size=1))
+            (self.obsmtrx)[i,1] = abs(np.random.normal(self.obsmtrxmeanpriors[i] + (1.0 / self.obsmtrxmeanpriors[i]), self.obsmtrxvarpriors[i] + (1.0 / self.obsmtrxvarpriors[i]),size=1))
     def generatetransitionmtrx(self):
         # used dirchlet distribution adding up to one, for probabiliteis of transition in a state
         self.transitionmtrx = 2.22044604925e-16 * np.ones((self.numofstates,self.numofstates))
@@ -84,7 +84,7 @@ class hmmforward(object):
         
 # just testing
 def main():
-    exmodel = hmmforward(3,1,10,1)
+    exmodel = hmmgaussian(3,1,20,1)
     print "observations"
     print exmodel.observations
     print "pi"
