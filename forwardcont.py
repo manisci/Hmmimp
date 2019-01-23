@@ -5,7 +5,7 @@ from sklearn.preprocessing import normalize
 
 
 
-def forward(transmtrx,obsmtrx,pie,observations):
+def forwardcont(transmtrx,obsmtrx,pie,observations):
     ''' Input: Transition matrix, pie, state_observation probs, observations
     Output: alphas Probabilites of being in different states at each time point for each sample given the observations till that point, i.e filteing 
     also most likely sequence of staets and its associated probabilies
