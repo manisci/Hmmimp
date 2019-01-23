@@ -66,14 +66,12 @@ class hmmgaussian(object):
             for samnum in range(self.numsamples):
                 elements = range(self.numofstates)
                 initialstate = np.random.choice(elements, 1, p=self.pie)[0]
-                elements = range(self.numofobsercases)
                 (self.observations)[samnum,0] = np.random.normal((self.obsmtrx)[initialstate,0],(self.obsmtrx)[initialstate,1])
                 prevstate = initialstate
                 (self.seqofstates)[samnum,0] = initialstate
                 for i in range(1,self.obserlength):
                     elements = range(self.numofstates)
                     nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
-                    elements = range(self.numofobsercases)
                     (self.observations)[samnum,i] = np.random.normal((self.obsmtrx)[nextstate,0],(self.obsmtrx)[nextstate,1])
                     (self.seqofstates)[samnum,i] = (nextstate)
                     prevstate = nextstate

@@ -107,28 +107,28 @@ def forward_backwardcont(transmtrx,obsmtrx,pie,observations):
 
     return (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations)
 
-def main():
-    exmodel = hmmgaussian(5,2,50,1)
-    observations = exmodel.observations
-    pie = exmodel.pie
-    transmtrx = exmodel.transitionmtrx
-    obsmtrx = exmodel.obsmtrx
-    seqofstates = exmodel.seqofstates
-    (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations) = forward_backwardcont(transmtrx,obsmtrx,pie,observations)
-    print "forward_backward acc"
-    print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
-    print "forward acc"
-    print np.sum(seqofstates==forward_most_likely_seq) / float(exmodel.obserlength)
-    print "forward_backward prob"
-    print log_prob_most_likely_seq
-    print "forward prob"
-    print forward_log_prob_most_likely_seq
-    print "forward_backward is more certain at each time point"
-    numwins = 0
-    for i in range(exmodel.obserlength):
-        if max(alphas[i,:]) <= max(gammas[i,:]):
-            numwins +=1
-    print numwins / float(exmodel.obserlength)
-    # print stats.mode(seqofstates)
-    # print stats.mode(most_likely_seq)
-main()
+# def main():
+#     exmodel = hmmgaussian(5,2,50,1)
+#     observations = exmodel.observations
+#     pie = exmodel.pie
+#     transmtrx = exmodel.transitionmtrx
+#     obsmtrx = exmodel.obsmtrx
+#     seqofstates = exmodel.seqofstates
+#     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations) = forward_backwardcont(transmtrx,obsmtrx,pie,observations)
+#     print "forward_backward acc"
+#     print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
+#     print "forward acc"
+#     print np.sum(seqofstates==forward_most_likely_seq) / float(exmodel.obserlength)
+#     print "forward_backward prob"
+#     print log_prob_most_likely_seq
+#     print "forward prob"
+#     print forward_log_prob_most_likely_seq
+#     print "forward_backward is more certain at each time point"
+#     numwins = 0
+#     for i in range(exmodel.obserlength):
+#         if max(alphas[i,:]) <= max(gammas[i,:]):
+#             numwins +=1
+#     print numwins / float(exmodel.obserlength)
+#     # print stats.mode(seqofstates)
+#     # print stats.mode(most_likely_seq)
+# main()
