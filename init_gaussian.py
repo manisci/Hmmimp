@@ -9,10 +9,6 @@ class hmmgaussian(object):
      init pi equality which says how much equality we would like in initial distribution of the states
      ( the higher means less diversity, while a fraction means more diversity and default value is one) and desired number of samples, 
      and finally length of indivdual samples we want to generate from this model.
-
-    You can convert the observations and obsmtrx all together into one matrix
-    called soft evidence which is a K * T matrix by using the corresponding
-    distribution across all the states for each time point and use that instead
     '''
 
     
@@ -83,25 +79,25 @@ class hmmgaussian(object):
                     prevstate = nextstate
         
 # just testing
-def main():
-    exmodel = hmmgaussian(3,1,20,1)
-    print "observations"
-    print exmodel.observations
-    print "pi"
-    print exmodel.pie
-    print "transition matrix"
-    print exmodel.transitionmtrx
-    print "observation matrix"
-    print exmodel.obsmtrx
-    print "trans mtrx priors"
-    print exmodel.transitionmtrxpriors
-    print "obsrvationmtrx priors"
-    print exmodel.obsmtrxmeanpriors
-    print exmodel.obsmtrxvarpriors
-    print "sequence of states"
-    print exmodel.seqofstates
+# def main():
+#     exmodel = hmmgaussian(3,1,20,1)
+#     print "observations"
+#     print exmodel.observations
+#     print "pi"
+#     print exmodel.pie
+#     print "transition matrix"
+#     print exmodel.transitionmtrx
+#     print "observation matrix"
+#     print exmodel.obsmtrx
+#     print "trans mtrx priors"
+#     print exmodel.transitionmtrxpriors
+#     print "obsrvationmtrx priors"
+#     print exmodel.obsmtrxmeanpriors
+#     print exmodel.obsmtrxvarpriors
+#     print "sequence of states"
+#     print exmodel.seqofstates
     
-main()
+# main()
 
             
         
