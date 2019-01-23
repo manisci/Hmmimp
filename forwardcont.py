@@ -19,14 +19,14 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         Zis =  eps * np.ones((timelength))
         most_likely_seq = eps * np.ones((timelength))
         alphas = eps * np.ones((timelength,numstates))
-        phi0 = eps * np.empty(numstates)
+        phi0 = eps * np.ones(numstates)
         for state in range(numstates):
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
             phi0[state] = distr.pdf(observations[0])
         (alphas[0,:]) = (np.multiply(phi0,pie)) 
         most_likely_seq[0] = np.argmax(alphas[0,:])
         for t in range(1,timelength):
-            phi_t = eps * np.empty(numstates)
+            phi_t = eps * np.ones(numstates)
             for state in range(numstates):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 phi_t[state] = distr.pdf(observations[t])
@@ -48,16 +48,16 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         most_likely_seq = eps * np.ones((numsamples,timelength))
         alphas = eps * np.ones((numsamples,timelength,numstates))
         log_prob_most_likely_seq = eps * np.ones((numsamples))
-        logobservations = np.empty(numsamples)
+        logobservations = eps *  np.ones(numsamples)
         for sample in range(numsamples):
-            phi0 = eps * np.empty(numstates)
+            phi0 = eps * np.ones(numstates)
             for state in range(numstates):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 phi0[state] = distr.pdf(observations[sample,0])
             alphas[sample,0,:] = np.multiply(phi0,pie)
             most_likely_seq[sample,0] = np.argmax(alphas[sample,0,:])
             for t in range(1,timelength):
-                phi_t = eps * np.empty(numstates)
+                phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                     phi_t[state] = distr.pdf(observations[sample,t])

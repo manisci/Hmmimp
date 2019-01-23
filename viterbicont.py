@@ -21,7 +21,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         optzis = eps * np.ones((timelength))
         As = eps * np.ones((timelength,numstates))
         # .reshape(-1,1)
-        probs = eps * np.empty(numstates)
+        probs = eps * np.ones(numstates)
         for state in range(numstates):
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
             probs[state] = distr.pdf(observations[0])
@@ -51,7 +51,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         optzis = eps *np.ones((numsamples,timelength))
         As = eps * np.ones((numsamples,timelength,numstates))
         for sample in range(numsamples):
-            probs = eps * np.empty(numstates)
+            probs = eps * np.ones(numstates)
             for state in range(numstates):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 probs[state] = distr.pdf(observations[sample,0])
