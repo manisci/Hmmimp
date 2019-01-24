@@ -219,7 +219,7 @@ def initializeparameters(observations,numstates,numsamples):
         timelength = np.shape(observations)[1]
 
     obsmean = np.mean(observations)
-    obsvar = np.var(observations)
+    obsvar = np.var(observations)+ eps
     pie = np.random.dirichlet(np.ones(numstates),size=1)[0]
     transmtrx = eps * np.ones((numstates,numstates))
     for i in range(numstates):
@@ -292,7 +292,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
     # print np.shape(gammas)
     return (gammas,kissies,logobservations)
 
-def M_step(gammas,kissies,observations):
+def M_step(gammas,kissies,observations,hard = False):
     eps = 2.22044605e-16
     if len(np.shape(observations)) == 2:
         numstate = np.shape(gammas)[2]
@@ -304,17 +304,30 @@ def M_step(gammas,kissies,observations):
         for i in range(numstate):
             newpie[i] = np.mean((gammas[:,0,i]))
         for q in range(numstate):
-            denominator = np.sum(gammas[:,:timelength-1,q])
+            denominator = np.sum(gammas[:,:timelength-1,q]) + eps
             for s in range(numstate):
                 newtransmtrx[q,s] = float(np.sum(kissies[:,:timelength-1,q,s]) )/ float(denominator)
-        for state in range(numstate):
-            numerator = []
+        if hard == False:
+            for state in range(numstate):
+                numerator = []
+                for time in range(timelength):
+                    for sample in range(numsamples):
+                        numerator.append(gammas[sample,time,state] * observations[sample,time])
+                        #mean ?? variance ??? 
+                newobsmtrx[state,0] = np.mean(numerator)
+                newobsmtrx[state,1] = np.var(numerator)+ eps
+        else:
+            assignments = []
+            for i in range(numstate):
+                assignments.append([])
             for time in range(timelength):
                 for sample in range(numsamples):
-                    numerator.append(gammas[sample,time,state] * observations[sample,time])
-                    #mean ?? variance ??? 
-            newobsmtrx[state,0] = np.mean(numerator)
-            newobsmtrx[state,1] = np.var(numerator)
+                    most_likely_state = np.argmax(gammas[sample,time,:])
+                    assignments[most_likely_state].append(observations[sample,time])
+            for state in range(numstate):
+                if len(assignments[state]) >= 1:
+                    newobsmtrx[state,0] = np.mean(assignments[state])
+                    newobsmtrx[state,1] = np.var(assignments[state]) + eps
 
     else:
         # single observation
@@ -326,20 +339,31 @@ def M_step(gammas,kissies,observations):
         for i in range(numstate):
             newpie[i] = float((gammas[0,i]))
         for q in range(numstate):
-            denominator = np.sum(gammas[:timelength-1,q])
+            denominator = np.sum(gammas[:timelength-1,q]) + eps
             for s in range(numstate):
                 newtransmtrx[q,s] = float(np.sum(kissies[:timelength-1,q,s]) )/ float(denominator)
-        for state in range(numstate):
-            numerator = []
+        if hard == False:
+            for state in range(numstate):
+                numerator = []
+                for time in range(timelength):
+                    numerator.append(gammas[time,state] * observations[time])
+                newobsmtrx[state,0] = np.mean(numerator)
+                newobsmtrx[state,1] = np.var(numerator)+ eps
+        else:
+            assignments = []
+            for i in range(numstate):
+                assignments.append([])
             for time in range(timelength):
-                numerator.append(gammas[time,state] * observations[time])
-            newobsmtrx[state,0] = np.mean(numerator)
-            newobsmtrx[state,1] = np.var(numerator)
-
+                most_likely_state = np.argmax(gammas[time,:])
+                assignments[most_likely_state].append(observations[time])
+            for state in range(numstate):
+                if len(assignments[state]) >= 1:
+                    newobsmtrx[state,0] = np.mean(assignments[state])
+                    newobsmtrx[state,1] = np.var(assignments[state])+ eps
     # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
 
-def Baumwelchcont(observations,numstates,exmodel):
+def Baumwelchcont(observations,numstates,exmodel,hard = False):
     eps = 2.22044605e-16
     ''' Uses an EM moedel and maximul likelihood estimation to learn the parameteres of an HMM model given the observations 
     In order to compute log likelihood, probabilitey of seeing the observations given the model at that iteration is used. 
@@ -374,7 +398,7 @@ def Baumwelchcont(observations,numstates,exmodel):
         prevlogobservation = [2.0] * numsamples
     while(diffprobproduct > eps):
         (gammas,kissies,logobservations) = E_step(pie,transmtrx,obsmtrx,observations)
-        (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations)
+        (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations,hard)
         likelihoods.append(np.log(logobservations))
         counter +=1
         diffprobproduct = abs(np.max(prevlogobservation - logobservations))
@@ -390,7 +414,9 @@ def main():
     exmodel = hmmgaussian(3,2,50,1)
     numstates = exmodel.numofstates
     observations = exmodel.observations
-    (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel)
+    hard = True
+    # hard = False
+    (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)

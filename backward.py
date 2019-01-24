@@ -14,10 +14,11 @@ def backward(transmtrx,obsmtrx,pie,observations):
     ''' Input : Transition matrix, pie, state_observation probs, observations
     Output: betas,  Probablities of observing the rest of the observations from that point on, given that we are at a given state at a give timepoint for each sample'''
     # initialization
+    eps = 2.22044605e-16
     if len(np.shape(observations)) == 1:
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
-        betas = np.empty((timelength,numstates))
+        betas = eps * np.ones((timelength,numstates))
         betas[timelength-1,:] = np.ones((1,numstates))
         # (betas[timelength-1,:],dummy) = normalize(betas[timelength-1,:])
         # print betas[timelength-1,:]
@@ -30,7 +31,7 @@ def backward(transmtrx,obsmtrx,pie,observations):
         numstates = np.shape(transmtrx)[0]
         numsamples = np.shape(observations)[0]
         timelength = np.shape(observations)[1]
-        betas = np.empty((numsamples,timelength,numstates))
+        betas = eps * np.ones((numsamples,timelength,numstates))
         for sample in range(numsamples):
             betas[sample,timelength-1,:] = np.ones((1,numstates))
             # (betas[timelength-1,:],dummy) = normalize(betas[timelength-1,:])
