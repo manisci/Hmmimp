@@ -42,7 +42,18 @@ import matplotlib.pyplot as plt
 #         thirdelemsum += float(thirdsum * p)
 #     print "doosh doosgh"
 #     return firstelemsum + secondelemsum + thirdelemsum
-
+def clipvalues_prevunderflowfw(vector):
+    eps = 2.22044604925e-16
+    minpie = np.min(vector)
+    vector[np.argmin(vector)] = eps
+    for i in range(np.shape(vector)[0]):
+        if vector[i] < eps:
+            vector[i] = eps +( vector[i] - minpie)
+        if vector[i] > 1:
+            vector[i] = 1.0
+        if vector[i] == 0:
+            vector[i] =eps    
+    return vector
 def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
     eps = 2.22044604925e-16
     numobscases = np.shape(obsmtrx)[1]
@@ -261,6 +272,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
     eps = 2.22044605e-16
     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis,logobservations) = \
     forward_backwardcont(transmtrx,obsmtrx,pie,observations)
+    
     # print "alphas"
     # print alphas
     # print "betas"

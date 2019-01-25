@@ -14,6 +14,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
     not just the optimum state individually for each time point'''
     # initialization
     eps = 2.22044604925e-16
+    probeps = 0.1
     if len(np.shape(observations)) == 1:
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
@@ -24,14 +25,14 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         probs = eps * np.ones(numstates)
         for state in range(numstates):
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-            probs[state] = distr.pdf(observations[0])
+            probs[state] = distr.cdf(observations[0]+probeps) - distr.cdf(observations[0]- probeps)
         deltas[0,:] = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
         for t in range(1,timelength):
             # set A here
             for j in range(numstates):
                 # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
                 distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
-                prob = distr.pdf(observations[t])
+                prob = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)
                 normed = normalize((deltas[t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
                 # print normed
                 As[t,j] = int(np.argmax(normed))
@@ -54,7 +55,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
             probs = eps * np.ones(numstates)
             for state in range(numstates):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                probs[state] = distr.pdf(observations[sample,0])
+                probs[state] = distr.cdf(observations[sample,0]+probeps) - distr.cdf(observations[sample,0]- probeps)
             deltas[sample,0,:]  = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
             # otherzero = np.argmax(deltas[sample,0,:])
             for t in range(1,timelength):
@@ -62,7 +63,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
                 for j in range(numstates):
                     # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
                     distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
-                    prob = distr.pdf(observations[sample,t])
+                    prob = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)
                     normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
                     # print normed
                     As[sample,t,j] = int(np.argmax(normed))

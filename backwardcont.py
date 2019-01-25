@@ -11,23 +11,42 @@ from scipy import stats
 #         v = u / Z
 #     return (v,Z)
 
+def clipvalues_prevoverflowfw(vector):
+    eps = 2.22044604925e-16
+    minpie = np.min(vector)
+    maxpie = np.max(vector)
+    vector[np.argmin(vector)] = eps
+    vector[np.argmax(vector)] = 1.0
+    for i in range(np.shape(vector)[0]):
+        if vector[i] < eps:
+            vector[i] = eps +( vector[i] - minpie)
+        if vector[i] > 1:
+            vector[i] = 1.0 - (maxpie - vector[i])
+        if vector[i] == 0:
+            vector[i] =eps 
+       
+    return vector
+
 def backwardcont(transmtrx,obsmtrx,pie,observations):
     ''' Input : Transition matrix, pie, state_observation probs, observations
     Output: betas,  Probablities of observing the rest of the observations from that point on, given that we are at a given state at a give timepoint for each sample'''
     # initialization
     eps = 2.22044605e-16
+    probeps = 0.1
     if len(np.shape(observations)) == 1:
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
         betas = eps * np.ones((timelength,numstates))
-        betas[timelength-1,:] = np.ones((1,numstates))
+        betas[timelength-1,:] = np.ones((numstates))
         # print betas[timelength-1,:]
         for t in range(timelength-1,0,-1):
             phi_t = eps * np.ones(numstates)
             for state in range(numstates):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                phi_t[state] = distr.pdf(observations[t])
-            betas[t-1,:] = np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))
+                phi_t[state] = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)
+            interm_result = np.multiply(phi_t , (betas[t,:]))
+            betas[t-1,:] = np.matmul(transmtrx,interm_result)
+            
     else:
         # multiple samples
         numstates = np.shape(transmtrx)[0]
@@ -41,7 +60,7 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
                 phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                    phi_t[state] = distr.pdf(observations[sample,t])
+                    phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)
                 betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
 
     return betas
