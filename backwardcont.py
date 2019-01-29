@@ -32,7 +32,6 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
     Output: betas,  Probablities of observing the rest of the observations from that point on, given that we are at a given state at a give timepoint for each sample'''
     # initialization
     eps = 2.22044605e-16
-    probeps = 0.1
     if len(np.shape(observations)) == 1:
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
@@ -42,8 +41,9 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
         for t in range(timelength-1,0,-1):
             phi_t = eps * np.ones(numstates)
             for state in range(numstates):
+                probeps = abs((0.1 *  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                phi_t[state] = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)
+                phi_t[state] = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)+ eps
             interm_result = np.multiply(phi_t , (betas[t,:]))
             betas[t-1,:] = np.matmul(transmtrx,interm_result)
             
@@ -59,8 +59,9 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
             for t in range(timelength-1,0,-1):
                 phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
+                    probeps = abs((0.1 *  obsmtrx[state,1]))
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                    phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)
+                    phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
                 betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
 
     return betas

@@ -179,6 +179,16 @@ def clipmatrix(mtrx):
 #     transmtrx = np.clip(transmtrx,2.22044604925e-16,1.0)
 #     obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
 #     return (pie,transmtrx,obsmtrx)
+
+def computelikelihoodbasedonseq(seq,obsmtrx,observations):
+    prob = 0
+    eps = 2.22044604925e-16
+    for t in range(len(seq)):
+        probeps = abs((0.1  * obsmtrx[int(seq[t]),1]))
+        distr = stats.norm(obsmtrx[int(seq[t]),0], obsmtrx[int(seq[t]),1])
+        obsprob = distr.cdf(observations[t] + probeps) - distr.cdf(observations[t]- probeps) + eps
+        prob += np.log(obsprob) + eps
+    return prob 
 def clipvalues_prevoverflowfw(vector):
     eps = 2.22044604925e-16
     minpie = np.min(vector)
@@ -272,12 +282,12 @@ def E_step(pie,transmtrx,obsmtrx,observations):
     eps = 2.22044605e-16
     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis,logobservations) = \
     forward_backwardcont(transmtrx,obsmtrx,pie,observations)
-    
+    likelihood_basedonseq = computelikelihoodbasedonseq(most_likely_seq,obsmtrx,observations)
+    print likelihood_basedonseq
     # print "alphas"
     # print alphas
     # print "betas"
     # print betas
-
 
     # print " in E step after forward backward"
     # print np.shape(gammas)    
@@ -293,9 +303,10 @@ def E_step(pie,transmtrx,obsmtrx,observations):
             for t in range(timelength-1):
                 for q in range(numstate):
                     for s in range(numstate):
+                        probeps = abs(0.1 *  obsmtrx[s,1])
                         distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
-                        obsprob = distr.pdf(observations[sample,t+1])
-                        kissies[sample,t,q,s] = float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[sample,t+1,s])
+                        obsprob = distr.cdf(observations[sample,t+1] + probeps) - distr.cdf(observations[sample,t+1] - probeps) + eps
+                        kissies[sample,t,q,s] = (float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[sample,t+1,s])) + eps
                 wholesum = (np.sum(kissies[sample,t,:,:]))
                 kissies[sample,t,:,:] /= wholesum
         for sample in range(numsamples):
@@ -314,9 +325,11 @@ def E_step(pie,transmtrx,obsmtrx,observations):
         for t in range(timelength-1):
             for q in range(numstate):
                 for s in range(numstate):
+                    probeps = abs(0.1 *  obsmtrx[s,1])
                     distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
-                    obsprob = distr.pdf(observations[t+1])
-                    kissies[t,q,s] = float(alphas[t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[t+1,s])
+                    obsprob = distr.cdf(observations[t+1]+ probeps) - distr.cdf(observations[t+1]- probeps) + eps
+                    # print obsprob
+                    kissies[t,q,s] = (float(alphas[t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[t+1,s])) + eps
             wholesum = np.sum(kissies[t,:,:])
             kissies[t,:,:] /= wholesum
         kissies[timelength-1,:,:] /= np.sum(kissies[timelength-1,:,:])
@@ -325,7 +338,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
         # (pie,transmtrx,obsmtrx,gammas,kissies) = clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies)
     # print " In E step after clipping "
     # print np.shape(gammas)
-    return (gammas,kissies,logobservations)
+    return (gammas,kissies,logobservations,likelihood_basedonseq)
 
 def M_step(gammas,kissies,observations,hard = False):
     eps = 2.22044605e-16
@@ -341,7 +354,7 @@ def M_step(gammas,kissies,observations,hard = False):
         for q in range(numstate):
             denominator = np.sum(gammas[:,:timelength-1,q]) 
             for s in range(numstate):
-                newtransmtrx[q,s] = float(np.sum(kissies[:,:timelength-1,q,s]) )/ float(denominator)
+                newtransmtrx[q,s] = (float(np.sum(kissies[:,:timelength-1,q,s]) )/ float(denominator)) + eps
         if hard == False:
             for state in range(numstate):
                 numerator = []
@@ -349,8 +362,8 @@ def M_step(gammas,kissies,observations,hard = False):
                     for sample in range(numsamples):
                         numerator.append(gammas[sample,time,state] * observations[sample,time])
                         #mean ?? variance ??? 
-                newobsmtrx[state,0] = np.mean(numerator)+ eps
-                newobsmtrx[state,1] = np.var(numerator)+ eps
+                newobsmtrx[state,0] = np.mean(numerator) + eps
+                newobsmtrx[state,1] = np.var(numerator) + eps
         else:
             assignments = []
             for i in range(numstate):
@@ -362,7 +375,7 @@ def M_step(gammas,kissies,observations,hard = False):
             for state in range(numstate):
                 if len(assignments[state]) >= 1:
                     newobsmtrx[state,0] = np.mean(assignments[state])+ eps
-                    newobsmtrx[state,1] = np.var(assignments[state]) + eps
+                    newobsmtrx[state,1] = np.var(assignments[state])+ eps
 
     else:
         # single observation
@@ -376,7 +389,8 @@ def M_step(gammas,kissies,observations,hard = False):
         for q in range(numstate):
             denominator = np.sum(gammas[:timelength-1,q]) 
             for s in range(numstate):
-                newtransmtrx[q,s] = float(np.sum(kissies[:timelength-1,q,s]) )/ float(denominator)
+                newtransmtrx[q,s] = (float(np.sum(kissies[:timelength-1,q,s]) )/ float(denominator)) + eps
+        print newtransmtrx
         if hard == False:
             for state in range(numstate):
                 numerator = []
@@ -384,6 +398,7 @@ def M_step(gammas,kissies,observations,hard = False):
                     numerator.append(gammas[time,state] * observations[time])
                 newobsmtrx[state,0] = np.mean(numerator)+ eps
                 newobsmtrx[state,1] = np.var(numerator)+ eps
+            # print newobsmtrx
         else:
             assignments = []
             for i in range(numstate):
@@ -395,6 +410,7 @@ def M_step(gammas,kissies,observations,hard = False):
                 if len(assignments[state]) >= 1:
                     newobsmtrx[state,0] = np.mean(assignments[state])+ eps
                     newobsmtrx[state,1] = np.var(assignments[state])+ eps
+
     # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
 
@@ -424,6 +440,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     noiterations = 100
     conv_threshold = 0.001
     diff_consec_params = 100
+    likelihood_basedonseqs = []
     likelihoods = []
     counter = 0
     diffprobproduct = 1.0
@@ -432,24 +449,31 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     else:
         prevlogobservation = [2.0] * numsamples
     while(counter < 20):
-        (gammas,kissies,logobservations) = E_step(pie,transmtrx,obsmtrx,observations)
+        (gammas,kissies,logobservations,likelihood_basedonseq) = E_step(pie,transmtrx,obsmtrx,observations)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations,hard)
         likelihoods.append((logobservations))
+        likelihood_basedonseqs.append(likelihood_basedonseq)
         counter +=1
         diffprobproduct = abs(np.max(prevlogobservation - logobservations))
         prevlogobservation = logobservations
 
-    title = "likelihoodtrend.png"
-    plt.plot(range(counter),likelihoods)
+    title = "likelihoodtrendforw.png"
+    plt.plot(range(counter),likelihoods,'r')
     plt.savefig(title)
+    plt.close()
+    title = "likelihoodtrendseq.png"
+    plt.plot(range(counter),likelihood_basedonseqs,'b')
+    plt.savefig(title)
+    plt.close()
     print "did this much iterations"
     print counter
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmgaussian(3,1,10,1)
+    exmodel = hmmgaussian(3,1,20,1)
     numstates = exmodel.numofstates
     observations = exmodel.observations
+    print observations
     # hard = True
     hard = False
     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
