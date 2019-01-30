@@ -23,8 +23,8 @@ def getseqofstatescont(numstates,numsamples,observations,exmodel):
     (seq_states ,deltas)= viterbicont(transmtrx,obsmtrx,pie,observations)
     return (seq_states,deltas)
 def main():
-    numstates = 2
-    numsamples = 2
+    numstates = 8
+    numsamples = 400
     numbofobsrv = 30
     exmodel = hmmgaussian(numstates,1,numbofobsrv,numsamples)
     observations = exmodel.observations
