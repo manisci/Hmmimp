@@ -536,29 +536,29 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     print counter
     return (pie,transmtrx,obsmtrx) 
 
-def main():
-    exmodel = hmmgaussian(2,1,30,100)
-    numstates = exmodel.numofstates
-    observations = exmodel.observations
-    # hard = True
-    hard = False
-    (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
-    # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
-    piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
-    transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
-    # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
+# def main():
+#     exmodel = hmmgaussian(2,1,30,100)
+#     numstates = exmodel.numofstates
+#     observations = exmodel.observations
+#     # hard = True
+#     hard = False
+#     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
+#     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+#     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
+#     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
+#     # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
 
-    print "realpie is "
-    print exmodel.pie
-    print "estimated pie is"
-    print pie
-    print "realtrans"
-    print exmodel.transitionmtrx
-    print "estimated transition matrix is"
-    print transmtrx
-    print "real obsmtrx"
-    print exmodel.obsmtrx
-    print "estimated observation matrix is"
-    print obsmtrx
+#     print "realpie is "
+#     print exmodel.pie
+#     print "estimated pie is"
+#     print pie
+#     print "realtrans"
+#     print exmodel.transitionmtrx
+#     print "estimated transition matrix is"
+#     print transmtrx
+#     print "real obsmtrx"
+#     print exmodel.obsmtrx
+#     print "estimated observation matrix is"
+#     print obsmtrx
 
-main()
+# main()

@@ -23,7 +23,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         # .reshape(-1,1)
         probs = eps * np.ones(numstates)
         for state in range(numstates):
-            probeps = abs((0.01 *  obsmtrx[state,1]))
+            probeps = abs((0.1 *  obsmtrx[state,1]))
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
             probs[state] = distr.cdf(observations[0]+probeps) - distr.cdf(observations[0]- probeps)+ eps
         deltas[0,:] = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
@@ -31,7 +31,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
             # set A here
             for j in range(numstates):
                 # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-                probeps = abs((0.01 *  obsmtrx[j,1]))
+                probeps = abs((0.1 *  obsmtrx[j,1]))
                 distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
                 prob = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)+ eps
                 normed = normalize((deltas[t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
@@ -55,7 +55,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         for sample in range(numsamples):
             probs = eps * np.ones(numstates)
             for state in range(numstates):
-                probeps = abs((0.01 *  obsmtrx[state,1]))
+                probeps = abs((0.1 *  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 probs[state] = distr.cdf(observations[sample,0]+probeps) - distr.cdf(observations[sample,0]- probeps)+ eps
             deltas[sample,0,:]  = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
@@ -64,7 +64,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
                 # set A here
                 for j in range(numstates):
                     # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-                    probeps = abs((0.01 *  obsmtrx[j,1]))
+                    probeps = abs((0.1 *  obsmtrx[j,1]))
                     distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
                     prob = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
                     normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
@@ -81,7 +81,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
     return (optzis,deltas)
 
 # def main():
-#     exmodel = hmmgaussian(3,1,50,3)
+#     exmodel = hmmgaussian(3,1,20,1)
 #     observations = exmodel.observations
 #     pie = exmodel.pie
 #     transmtrx = exmodel.transitionmtrx
@@ -89,7 +89,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
 #     seqofstates = exmodel.seqofstates
 #     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations) = forward_backwardcont(transmtrx,obsmtrx,pie,observations)
 #     print "forward_backward acc"
-#     print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
+#     print np.sum(seqofstates == most_likely_seq) / float(exmodel.obserlength)
 #     print "forward acc"
 #     print np.sum(seqofstates==forward_most_likely_seq) / float(exmodel.obserlength)
 #     print "forward_backward prob"
@@ -97,7 +97,9 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
 #     print "forward prob"
 #     print forward_log_prob_most_likely_seq
 #     (mlpath,deltas) = viterbicont(transmtrx,obsmtrx,pie,observations)
-#     print "forward_backward is more certain at each time point"
+#     print mlpath
+#     print seqofstates
+    
 #     # for i in range(exmodel.obserlength):
 #     #     if max(alphas[i,:]) <= max(gammas[i,:]):
 #     #         numwins +=1
