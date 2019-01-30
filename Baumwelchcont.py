@@ -182,9 +182,10 @@ def computelikelihoodbasedonseq(seq,obsmtrx,observations):
     prob = 0
     eps = 2.22044604925e-16
     for t in range(len(seq)):
-        probeps = abs((0.01  * obsmtrx[int(seq[t]),1]))
+        probeps = abs((0.0001  * obsmtrx[int(seq[t]),1]))
         distr = stats.norm(obsmtrx[int(seq[t]),0], obsmtrx[int(seq[t]),1])
         obsprob = distr.cdf(observations[t] + probeps) - distr.cdf(observations[t]- probeps) 
+        print obsprob
         prob += np.log(obsprob) 
     return prob 
 def clipvalues_prevoverflowfw(vector):
@@ -414,7 +415,7 @@ def M_step(gammas,kissies,observations,hard = False):
 
 def Baumwelchcont(observations,numstates,exmodel,hard = False):
     eps = 2.22044605e-16
-    ''' Uses an EM moedel and maximul likelihood estimation to learn the parameteres of an HMM model given the observations 
+    ''' Uses an EM model and maximul likelihood estimation to learn the parameteres of an HMM model given the observations 
     In order to compute log likelihood, probabilitey of seeing the observations given the model at that iteration is used. 
     For convergence purposes, the updating continues till the maximum value of difference between 
     previous iteration likelihood and current iteartion likelihood among all samples is smaller than machine epsilon.
@@ -432,8 +433,8 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
         numsamples = 1
 
     # initialization
-    # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
-    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
+    (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
+    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     noiterations = 100
     conv_threshold = 0.001
@@ -449,18 +450,19 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     while(counter < 20):
         (gammas,kissies,logobservations,likelihood_basedonseq) = E_step(pie,transmtrx,obsmtrx,observations)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations,hard)
-        likelihoods.append((logobservations))
-        likelihood_basedonseqs.append(likelihood_basedonseq)
+        if counter != 0:
+            likelihoods.append((logobservations))
+            likelihood_basedonseqs.append(likelihood_basedonseq)
         counter +=1
         diffprobproduct = abs(np.max(prevlogobservation - logobservations))
         prevlogobservation = logobservations
 
     title = "likelihoodtrendforw.png"
-    plt.plot(range(counter),likelihoods,'r')
+    plt.plot(range(counter-1),likelihoods,'r')
     plt.savefig(title)
     plt.close()
     title = "likelihoodtrendseq.png"
-    plt.plot(range(counter),likelihood_basedonseqs,'b')
+    plt.plot(range(counter-1),likelihood_basedonseqs,'b')
     plt.savefig(title)
     plt.close()
     print "did this much iterations"
