@@ -185,7 +185,7 @@ def computelikelihoodbasedonseq(seq,obsmtrx,observations):
         probeps = abs((0.1  * obsmtrx[int(seq[t]),1]))
         distr = stats.norm(obsmtrx[int(seq[t]),0], obsmtrx[int(seq[t]),1])
         obsprob = distr.cdf(observations[t] + probeps) - distr.cdf(observations[t]- probeps) 
-        print obsprob
+        # print obsprob
         prob += np.log(obsprob) 
     return prob 
 def clipvalues_prevoverflowfw(vector):
@@ -282,7 +282,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis,logobservations) = \
     forward_backwardcont(transmtrx,obsmtrx,pie,observations)
     likelihood_basedonseq = computelikelihoodbasedonseq(most_likely_seq,obsmtrx,observations)
-    print likelihood_basedonseq
+    # print likelihood_basedonseq
     # print "alphas"
     # print alphas
     # print "betas"
@@ -389,7 +389,6 @@ def M_step(gammas,kissies,observations,hard = False):
             denominator = np.sum(gammas[:timelength-1,q]) 
             for s in range(numstate):
                 newtransmtrx[q,s] = (float(np.sum(kissies[:timelength-1,q,s]) )/ float(denominator)) 
-        print newtransmtrx
         if hard == False:
             for state in range(numstate):
                 numerator = []
@@ -447,15 +446,18 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
         prevlogobservation = 2.0
     else:
         prevlogobservation = [2.0] * numsamples
-    while(counter < 20):
+    while(diffprobproduct > 2.22044605e-16):
         (gammas,kissies,logobservations,likelihood_basedonseq) = E_step(pie,transmtrx,obsmtrx,observations)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations,hard)
         if counter != 0:
             likelihoods.append((logobservations))
             likelihood_basedonseqs.append(likelihood_basedonseq)
+        curlikelihood = likelihood_basedonseq
+        diffprobproduct = abs((prevlogobservation - curlikelihood))
+        print diffprobproduct
+        prevlogobservation = curlikelihood
         counter +=1
-        diffprobproduct = abs(np.max(prevlogobservation - logobservations))
-        prevlogobservation = logobservations
+        
 
     title = "likelihoodtrendforw.png"
     plt.plot(range(counter-1),likelihoods,'r')
@@ -470,10 +472,9 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmgaussian(4,1,50,1)
+    exmodel = hmmgaussian(3,0.1,50,1)
     numstates = exmodel.numofstates
     observations = exmodel.observations
-    print observations
     # hard = True
     hard = False
     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
