@@ -214,9 +214,6 @@ def initialize_with_kmeans(observations,numstates,numsamples,exmodel):
         obsmtrx[state,1] = np.var(vals[state]) + eps
     return (pie,transmtrx,obsmtrx)
         
-
-
-
 def computelikelihoodbasedonseq(seq,obsmtrx,observations):
     prob = 0
     eps = 2.22044604925e-16
@@ -527,7 +524,6 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
         prevlogobservation = curlikelihood
         counter +=1
         
-
     title = "likelihoodtrendforw.png"
     plt.plot(range(counter-1),likelihoods,'r')
     plt.savefig(title)
