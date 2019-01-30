@@ -482,6 +482,7 @@ def main():
     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
     # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
+    
     print "realpie is "
     print exmodel.pie
     print "estimated pie is"
