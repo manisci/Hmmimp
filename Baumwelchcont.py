@@ -182,7 +182,7 @@ def computelikelihoodbasedonseq(seq,obsmtrx,observations):
     prob = 0
     eps = 2.22044604925e-16
     for t in range(len(seq)):
-        probeps = abs((0.0001  * obsmtrx[int(seq[t]),1]))
+        probeps = abs((0.1  * obsmtrx[int(seq[t]),1]))
         distr = stats.norm(obsmtrx[int(seq[t]),0], obsmtrx[int(seq[t]),1])
         obsprob = distr.cdf(observations[t] + probeps) - distr.cdf(observations[t]- probeps) 
         print obsprob
@@ -302,7 +302,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
             for t in range(timelength-1):
                 for q in range(numstate):
                     for s in range(numstate):
-                        probeps = abs(0.01 *  obsmtrx[s,1])
+                        probeps = abs(0.1 *  obsmtrx[s,1])
                         distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
                         obsprob = distr.cdf(observations[sample,t+1] + probeps) - distr.cdf(observations[sample,t+1] - probeps)
                         kissies[sample,t,q,s] = (float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[sample,t+1,s]))
@@ -324,7 +324,7 @@ def E_step(pie,transmtrx,obsmtrx,observations):
         for t in range(timelength-1):
             for q in range(numstate):
                 for s in range(numstate):
-                    probeps = abs(0.01 *  obsmtrx[s,1])
+                    probeps = abs(0.1 *  obsmtrx[s,1])
                     distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
                     obsprob = distr.cdf(observations[t+1]+ probeps) - distr.cdf(observations[t+1]- probeps) 
                     # print obsprob
@@ -470,7 +470,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmgaussian(3,1,20,1)
+    exmodel = hmmgaussian(4,1,50,1)
     numstates = exmodel.numofstates
     observations = exmodel.observations
     print observations

@@ -45,7 +45,7 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         alphas = eps * np.ones((timelength,numstates))
         phi0 = eps * np.ones(numstates)
         for state in range(numstates):
-            probeps = abs((0.1 *  obsmtrx[state,1]))
+            probeps = abs((0.01*  obsmtrx[state,1]))
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
             phi0[state] = distr.cdf(observations[0]+probeps) - distr.cdf(observations[0]- probeps)
         (alphas[0,:]) = (np.multiply(phi0,pie)) 
@@ -54,7 +54,7 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         for t in range(1,timelength):
             phi_t = eps * np.ones(numstates)
             for state in range(numstates):
-                probeps = abs((0.1 *  obsmtrx[state,1]))
+                probeps = abs((0.01*  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 phi_t[state] = distr.cdf(observations[t]+ probeps) - distr.cdf(observations[t] - probeps)
                 # print observations[t]
@@ -86,7 +86,7 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         for sample in range(numsamples):
             phi0 = eps * np.ones(numstates)
             for state in range(numstates):
-                probeps = abs((0.1 *  obsmtrx[state,1]))
+                probeps = abs((0.01*  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 phi0[state] = distr.cdf(observations[sample,0]+probeps) - distr.cdf(observations[sample,0]- probeps)
             alphas[sample,0,:] = np.multiply(phi0,pie)
@@ -96,7 +96,7 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
             for t in range(1,timelength):
                 phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
-                    probeps = abs((0.1 *  obsmtrx[state,1]))
+                    probeps = abs((0.01*  obsmtrx[state,1]))
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                     phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)
                 alphas[sample,t,:] = np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[sample,t-1,:])))
