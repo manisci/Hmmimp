@@ -20,8 +20,6 @@ def clipvalues_prevoverflowfw(vector):
     for i in range(np.shape(vector)[0]):
         if vector[i] < eps:
             vector[i] = eps +( vector[i] - minpie)
-        if vector[i] > 1:
-            vector[i] = 1.0 - (maxpie - vector[i])
         if vector[i] == 0:
             vector[i] =eps 
        
@@ -41,11 +39,13 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
         for t in range(timelength-1,0,-1):
             phi_t = eps * np.ones(numstates)
             for state in range(numstates):
-                probeps = abs((0.1 *  obsmtrx[state,1]))
+                probeps = abs((0.01 *  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                phi_t[state] = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)+ eps
+                phi_t[state] = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)
             interm_result = np.multiply(phi_t , (betas[t,:]))
             betas[t-1,:] = np.matmul(transmtrx,interm_result)
+            # betas[t-1,:] = clipvalues_prevoverflowfw(betas[t-1,:])
+
             
     else:
         # multiple samples
@@ -59,10 +59,12 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
             for t in range(timelength-1,0,-1):
                 phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
-                    probeps = abs((0.1 *  obsmtrx[state,1]))
+                    probeps = abs((0.01 *  obsmtrx[state,1]))
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                     phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
                 betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
+                # betas[sample,t-1,:] = clipvalues_prevoverflowfw(betas[sample,t-1,:])
+
 
     return betas
 

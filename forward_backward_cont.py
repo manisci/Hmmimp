@@ -65,8 +65,6 @@ def clipvalues_prevoverflowfw(vector):
     for i in range(np.shape(vector)[0]):
         if vector[i] < eps:
             vector[i] = eps +( vector[i] - minpie)
-        if vector[i] > 1:
-            vector[i] = 1.0 - (maxpie - vector[i])
         if vector[i] == 0:
             vector[i] =eps 
        
@@ -93,7 +91,7 @@ def forward_backwardcont(transmtrx,obsmtrx,pie,observations):
         for sample in range(numsamples):
             for i in range(timelength):
                 betas[sample,i,:] /= float(Ziis[sample,i])
-                betas[sample,i,:] = clipvalues_prevoverflowfw(betas[sample,i,:])
+                # betas[sample,i,:] = clipvalues_prevoverflowfw(betas[sample,i,:])
         for sample in range(numsamples):
             for t in range(timelength):
                 gammas[sample,t,:] = normalize(np.multiply(alphas[sample,t,:],betas[sample,t,:]).reshape(1, -1),norm = 'l1')
@@ -117,6 +115,7 @@ def forward_backwardcont(transmtrx,obsmtrx,pie,observations):
             # betas[i,:] = clipvalues_prevoverflowfw(betas[i,:])
         for t in range(timelength):
             gammas[t,:] = normalize(np.multiply(alphas[t,:],betas[t,:]).reshape(1, -1),norm = 'l1')
+            # gammas[t,:] = clipvalues_prevoverflowfw(gammas[t,:])
             # print gammas
             most_likely_seq[t] = np.argmax(gammas[t,:])
         # (alphas,betas,gammas,Ziis) = clipvalues_prevunderflowfw(alphas,betas,gammas,Ziis)

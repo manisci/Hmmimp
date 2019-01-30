@@ -49,8 +49,6 @@ def clipvalues_prevunderflowfw(vector):
     for i in range(np.shape(vector)[0]):
         if vector[i] < eps:
             vector[i] = eps +( vector[i] - minpie)
-        if vector[i] > 1:
-            vector[i] = 1.0
         if vector[i] == 0:
             vector[i] =eps    
     return vector
@@ -184,10 +182,10 @@ def computelikelihoodbasedonseq(seq,obsmtrx,observations):
     prob = 0
     eps = 2.22044604925e-16
     for t in range(len(seq)):
-        probeps = abs((0.1  * obsmtrx[int(seq[t]),1]))
+        probeps = abs((0.01  * obsmtrx[int(seq[t]),1]))
         distr = stats.norm(obsmtrx[int(seq[t]),0], obsmtrx[int(seq[t]),1])
-        obsprob = distr.cdf(observations[t] + probeps) - distr.cdf(observations[t]- probeps) + eps
-        prob += np.log(obsprob) + eps
+        obsprob = distr.cdf(observations[t] + probeps) - distr.cdf(observations[t]- probeps) 
+        prob += np.log(obsprob) 
     return prob 
 def clipvalues_prevoverflowfw(vector):
     eps = 2.22044604925e-16
@@ -303,10 +301,10 @@ def E_step(pie,transmtrx,obsmtrx,observations):
             for t in range(timelength-1):
                 for q in range(numstate):
                     for s in range(numstate):
-                        probeps = abs(0.1 *  obsmtrx[s,1])
+                        probeps = abs(0.01 *  obsmtrx[s,1])
                         distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
-                        obsprob = distr.cdf(observations[sample,t+1] + probeps) - distr.cdf(observations[sample,t+1] - probeps) + eps
-                        kissies[sample,t,q,s] = (float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[sample,t+1,s])) + eps
+                        obsprob = distr.cdf(observations[sample,t+1] + probeps) - distr.cdf(observations[sample,t+1] - probeps)
+                        kissies[sample,t,q,s] = (float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[sample,t+1,s]))
                 wholesum = (np.sum(kissies[sample,t,:,:]))
                 kissies[sample,t,:,:] /= wholesum
         for sample in range(numsamples):
@@ -325,11 +323,11 @@ def E_step(pie,transmtrx,obsmtrx,observations):
         for t in range(timelength-1):
             for q in range(numstate):
                 for s in range(numstate):
-                    probeps = abs(0.1 *  obsmtrx[s,1])
+                    probeps = abs(0.01 *  obsmtrx[s,1])
                     distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
-                    obsprob = distr.cdf(observations[t+1]+ probeps) - distr.cdf(observations[t+1]- probeps) + eps
+                    obsprob = distr.cdf(observations[t+1]+ probeps) - distr.cdf(observations[t+1]- probeps) 
                     # print obsprob
-                    kissies[t,q,s] = (float(alphas[t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[t+1,s])) + eps
+                    kissies[t,q,s] = (float(alphas[t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[t+1,s])) 
             wholesum = np.sum(kissies[t,:,:])
             kissies[t,:,:] /= wholesum
         kissies[timelength-1,:,:] /= np.sum(kissies[timelength-1,:,:])
@@ -354,7 +352,7 @@ def M_step(gammas,kissies,observations,hard = False):
         for q in range(numstate):
             denominator = np.sum(gammas[:,:timelength-1,q]) 
             for s in range(numstate):
-                newtransmtrx[q,s] = (float(np.sum(kissies[:,:timelength-1,q,s]) )/ float(denominator)) + eps
+                newtransmtrx[q,s] = (float(np.sum(kissies[:,:timelength-1,q,s]) )/ float(denominator)) 
         if hard == False:
             for state in range(numstate):
                 numerator = []
@@ -362,8 +360,8 @@ def M_step(gammas,kissies,observations,hard = False):
                     for sample in range(numsamples):
                         numerator.append(gammas[sample,time,state] * observations[sample,time])
                         #mean ?? variance ??? 
-                newobsmtrx[state,0] = np.mean(numerator) + eps
-                newobsmtrx[state,1] = np.var(numerator) + eps
+                newobsmtrx[state,0] = np.mean(numerator)
+                newobsmtrx[state,1] = np.var(numerator) 
         else:
             assignments = []
             for i in range(numstate):
@@ -374,8 +372,8 @@ def M_step(gammas,kissies,observations,hard = False):
                     assignments[most_likely_state].append(observations[sample,time])
             for state in range(numstate):
                 if len(assignments[state]) >= 1:
-                    newobsmtrx[state,0] = np.mean(assignments[state])+ eps
-                    newobsmtrx[state,1] = np.var(assignments[state])+ eps
+                    newobsmtrx[state,0] = np.mean(assignments[state])
+                    newobsmtrx[state,1] = np.var(assignments[state])
 
     else:
         # single observation
@@ -389,15 +387,15 @@ def M_step(gammas,kissies,observations,hard = False):
         for q in range(numstate):
             denominator = np.sum(gammas[:timelength-1,q]) 
             for s in range(numstate):
-                newtransmtrx[q,s] = (float(np.sum(kissies[:timelength-1,q,s]) )/ float(denominator)) + eps
+                newtransmtrx[q,s] = (float(np.sum(kissies[:timelength-1,q,s]) )/ float(denominator)) 
         print newtransmtrx
         if hard == False:
             for state in range(numstate):
                 numerator = []
                 for time in range(timelength):
                     numerator.append(gammas[time,state] * observations[time])
-                newobsmtrx[state,0] = np.mean(numerator)+ eps
-                newobsmtrx[state,1] = np.var(numerator)+ eps
+                newobsmtrx[state,0] = np.mean(numerator)
+                newobsmtrx[state,1] = np.var(numerator)
             # print newobsmtrx
         else:
             assignments = []
@@ -408,8 +406,8 @@ def M_step(gammas,kissies,observations,hard = False):
                 assignments[most_likely_state].append(observations[time])
             for state in range(numstate):
                 if len(assignments[state]) >= 1:
-                    newobsmtrx[state,0] = np.mean(assignments[state])+ eps
-                    newobsmtrx[state,1] = np.var(assignments[state])+ eps
+                    newobsmtrx[state,0] = np.mean(assignments[state])
+                    newobsmtrx[state,1] = np.var(assignments[state])
 
     # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
@@ -434,8 +432,8 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
         numsamples = 1
 
     # initialization
-    (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
-    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
+    # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
+    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     noiterations = 100
     conv_threshold = 0.001

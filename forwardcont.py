@@ -9,26 +9,24 @@ def clipvalues_prevunderflowfw(vector):
     for i in range(np.shape(vector)[0]):
         if vector[i] < eps:
             vector[i] = eps +( vector[i] - minpie)
-        if vector[i] > 1:
-            vector[i] = 1.0
         if vector[i] == 0:
             vector[i] =eps    
     return vector
-def clipvalues_prevoverflowfw(vector):
-    eps = 2.22044604925e-16
-    minpie = np.min(vector)
-    maxpie = np.max(vector)
-    vector[np.argmin(vector)] = eps
-    vector[np.argmax(vector)] = 1.0
-    for i in range(np.shape(vector)[0]):
-        if vector[i] < eps:
-            vector[i] = eps +( vector[i] - minpie)
-        if vector[i] > 1:
-            vector[i] = 1.0 - (maxpie - vector[i])
-        if vector[i] == 0:
-            vector[i] =eps 
+# def clipvalues_prevoverflowfw(vector):
+#     eps = 2.22044604925e-16
+#     minpie = np.min(vector)
+#     maxpie = np.max(vector)
+#     vector[np.argmin(vector)] = eps
+#     vector[np.argmax(vector)] = 1.0
+#     for i in range(np.shape(vector)[0]):
+#         if vector[i] < eps:
+#             vector[i] = eps +( vector[i] - minpie)
+#         if vector[i] > 1:
+#             vector[i] = 1.0 - (maxpie - vector[i])
+#         if vector[i] == 0:
+#             vector[i] =eps 
        
-    return vector
+#     return vector
 
 
 def forwardcont(transmtrx,obsmtrx,pie,observations):
@@ -49,18 +47,18 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         for state in range(numstates):
             probeps = abs((0.1 *  obsmtrx[state,1]))
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-            phi0[state] = distr.cdf(observations[0]+probeps) - distr.cdf(observations[0]- probeps)+ eps
+            phi0[state] = distr.cdf(observations[0]+probeps) - distr.cdf(observations[0]- probeps)
         (alphas[0,:]) = (np.multiply(phi0,pie)) 
+        alphas[0,:] = clipvalues_prevunderflowfw(alphas[0,:])
         most_likely_seq[0] = np.argmax(alphas[0,:])
         for t in range(1,timelength):
             phi_t = eps * np.ones(numstates)
             for state in range(numstates):
                 probeps = abs((0.1 *  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                phi_t[state] = distr.cdf(observations[t]+ probeps) - distr.cdf(observations[t] - probeps)+ eps
+                phi_t[state] = distr.cdf(observations[t]+ probeps) - distr.cdf(observations[t] - probeps)
                 # print observations[t]
                 # print phi_t[state]
-            phi_t = clipvalues_prevunderflowfw(phi_t)
             # print 'trouble making probs'
             # print phi_t
             alphas[t,:] = np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[t-1,:])))
@@ -90,17 +88,20 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
             for state in range(numstates):
                 probeps = abs((0.1 *  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                phi0[state] = distr.cdf(observations[sample,0]+probeps) - distr.cdf(observations[sample,0]- probeps)+ eps
+                phi0[state] = distr.cdf(observations[sample,0]+probeps) - distr.cdf(observations[sample,0]- probeps)
             alphas[sample,0,:] = np.multiply(phi0,pie)
+            alphas[sample,0,:] = clipvalues_prevunderflowfw(alphas[sample,0,:])
+
             most_likely_seq[sample,0] = np.argmax(alphas[sample,0,:])
             for t in range(1,timelength):
                 phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
                     probeps = abs((0.1 *  obsmtrx[state,1]))
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                    phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
+                    phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)
                 alphas[sample,t,:] = np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[sample,t-1,:])))
                 most_likely_seq[sample,t] = np.argmax(alphas[sample,t,:])
+                alphas[sample,t,:] = clipvalues_prevunderflowfw(alphas[sample,t,:])
             log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]) + 2.22044604925e-16 )
         for sample in range(numsamples):
             # print "likelihood at this stage for sample " + str(sample) + "is"
