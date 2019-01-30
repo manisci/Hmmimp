@@ -7,7 +7,9 @@ from forward_backward_cont import forward_backwardcont
 from viterbicont import viterbicont
 import itertools
 from sklearn.preprocessing import normalize
+from sklearn.cluster import KMeans
 import matplotlib 
+import sklearn
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 # np.set_printoptions(precision=4,suppress=True)
@@ -187,6 +189,34 @@ def clipmatrix(mtrx):
 #     obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
 #     return (pie,transmtrx,obsmtrx)
 
+def initialize_with_kmeans(observations,numstates,numsamples,exmodel):
+    eps = 2.22044604925e-16
+
+    if numsamples == 1:
+            timelength = np.shape(observations)[0]
+    else:
+        timelength = np.shape(observations)[1]
+
+    pie = np.random.dirichlet(np.ones(numstates),size=1)[0]
+    transmtrx = eps * np.ones((numstates,numstates))
+    for i in range(numstates):
+        transmtrx[i,:] = np.random.dirichlet(np.ones(numstates),size=1)[0]
+    vals = []
+    for state in range(numstates):
+        vals.append([])
+    obsmtrx = eps * np.ones((numstates,2))
+    kmeans = KMeans(n_clusters=numstates, random_state=0).fit(observations)
+    clusterpreds = kmeans.labels_
+    for sample in range(numsamples):
+        vals[clusterpreds[sample]].append(observations[sample])
+    for state in range(numstates):
+        obsmtrx[state,0] = np.mean(vals[state])
+        obsmtrx[state,1] = np.var(vals[state]) + eps
+    return (pie,transmtrx,obsmtrx)
+        
+
+
+
 def computelikelihoodbasedonseq(seq,obsmtrx,observations):
     prob = 0
     eps = 2.22044604925e-16
@@ -204,7 +234,7 @@ def computelikelihoodbasedonseq(seq,obsmtrx,observations):
         probs = []
         for sample in range(numsamples):
             prob = 0
-            for t in range(len(seq)):
+            for t in range(np.shape(seq)[1]):
                 probeps = abs((0.1  * obsmtrx[int(seq[sample,t]),1]))
                 distr = stats.norm(obsmtrx[int(seq[sample,t]),0], obsmtrx[int(seq[sample,t]),1])
                 obsprob = distr.cdf(observations[sample,t] + probeps) - distr.cdf(observations[sample,t]- probeps) 
@@ -467,7 +497,8 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
         numsamples = 1
 
     # initialization
-    (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
+    (pie,transmtrx,obsmtrx )= initialize_with_kmeans(observations,numstates,numsamples,exmodel)
+    # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
     # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
     noiterations = 100
@@ -480,7 +511,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
         prevlogobservation = 2.0
     else:
         prevlogobservation = [2.0] * numsamples
-    threshold = 3
+    threshold = 0.1
     while(diffprobproduct > threshold):
         (gammas,kissies,logobservations,likelihood_basedonseq) = E_step(pie,transmtrx,obsmtrx,observations)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations,hard)
@@ -510,7 +541,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmgaussian(3,1,50,3)
+    exmodel = hmmgaussian(2,1,30,100)
     numstates = exmodel.numofstates
     observations = exmodel.observations
     # hard = True
