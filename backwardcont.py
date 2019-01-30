@@ -39,7 +39,7 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
         for t in range(timelength-1,0,-1):
             phi_t = eps * np.ones(numstates)
             for state in range(numstates):
-                probeps = abs((0.01*  obsmtrx[state,1]))
+                probeps = abs((0.1*  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 phi_t[state] = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)
             interm_result = np.multiply(phi_t , (betas[t,:]))
@@ -59,7 +59,7 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
             for t in range(timelength-1,0,-1):
                 phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
-                    probeps = abs((0.01*  obsmtrx[state,1]))
+                    probeps = abs((0.1*  obsmtrx[state,1]))
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                     phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
                 betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
