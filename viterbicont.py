@@ -21,9 +21,10 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         optzis = eps * np.ones((timelength))
         As = eps * np.ones((timelength,numstates))
         # .reshape(-1,1)
+        sortedprobs = (sorted(observations))
+        probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
         probs = eps * np.ones(numstates)
         for state in range(numstates):
-            probeps = abs((0.1 *  obsmtrx[state,1]))
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
             probs[state] = distr.cdf(observations[0]+probeps) - distr.cdf(observations[0]- probeps)+ eps
         deltas[0,:] = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
@@ -31,7 +32,6 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
             # set A here
             for j in range(numstates):
                 # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-                probeps = abs((0.1 *  obsmtrx[j,1]))
                 distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
                 prob = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)+ eps
                 normed = normalize((deltas[t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
@@ -53,9 +53,10 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         optzis = eps *np.ones((numsamples,timelength))
         As = eps * np.ones((numsamples,timelength,numstates))
         for sample in range(numsamples):
+            sortedprobs = (sorted(observations[sample,:]))
+            probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
             probs = eps * np.ones(numstates)
             for state in range(numstates):
-                probeps = abs((0.1 *  obsmtrx[state,1]))
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 probs[state] = distr.cdf(observations[sample,0]+probeps) - distr.cdf(observations[sample,0]- probeps)+ eps
             deltas[sample,0,:]  = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
@@ -64,7 +65,6 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
                 # set A here
                 for j in range(numstates):
                     # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
-                    probeps = abs((0.1 *  obsmtrx[j,1]))
                     distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
                     prob = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
                     normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')

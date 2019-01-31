@@ -217,9 +217,10 @@ def initialize_with_kmeans(observations,numstates,numsamples,exmodel):
 def computelikelihoodbasedonseq(seq,obsmtrx,observations):
     prob = 0
     eps = 2.22044604925e-16
-    if len(np.shape(observations)) == 0:
+    if len(np.shape(observations)) == 1:
+        sortedprobs = (sorted(observations))
+        probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
         for t in range(len(seq)):
-            probeps = abs((0.1  * obsmtrx[int(seq[t]),1]))
             distr = stats.norm(obsmtrx[int(seq[t]),0], obsmtrx[int(seq[t]),1])
             obsprob = distr.cdf(observations[t] + probeps) - distr.cdf(observations[t]- probeps) 
             # print obsprob
@@ -230,6 +231,8 @@ def computelikelihoodbasedonseq(seq,obsmtrx,observations):
         numsamples = np.shape(observations)[0]
         probs = []
         for sample in range(numsamples):
+            sortedprobs = (sorted(observations[sample,:]))
+            probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
             prob = 0
             for t in range(np.shape(seq)[1]):
                 probeps = abs((0.1  * obsmtrx[int(seq[sample,t]),1]))
@@ -353,10 +356,11 @@ def E_step(pie,transmtrx,obsmtrx,observations):
         numstate = np.shape(transmtrx)[0]
         kissies = eps * np.ones((numsamples,timelength,numstate,numstate))
         for sample in range(numsamples):
+            sortedprobs = (sorted(observations[sample,:]))
+            probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
             for t in range(timelength-1):
                 for q in range(numstate):
                     for s in range(numstate):
-                        probeps = abs(0.1 *  obsmtrx[s,1])
                         distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
                         obsprob = distr.cdf(observations[sample,t+1] + probeps) - distr.cdf(observations[sample,t+1] - probeps)
                         kissies[sample,t,q,s] = (float(alphas[sample,t,q]) * float(transmtrx[q,s]) * float(obsprob * betas[sample,t+1,s]))
@@ -376,10 +380,11 @@ def E_step(pie,transmtrx,obsmtrx,observations):
             # alphas[time,:] /= float(np.sum(alphas[time,:]))
         numstate = np.shape(transmtrx)[0]
         kissies = eps * np.ones((timelength,numstate,numstate))
+        sortedprobs = (sorted(observations))
+        probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
         for t in range(timelength-1):
             for q in range(numstate):
                 for s in range(numstate):
-                    probeps = abs(0.1 *  obsmtrx[s,1])
                     distr = stats.norm(obsmtrx[s,0], obsmtrx[s,1])
                     obsprob = distr.cdf(observations[t+1]+ probeps) - distr.cdf(observations[t+1]- probeps) 
                     # print obsprob
@@ -536,29 +541,29 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     print counter
     return (pie,transmtrx,obsmtrx) 
 
-# def main():
-#     exmodel = hmmgaussian(2,1,30,100)
-#     numstates = exmodel.numofstates
-#     observations = exmodel.observations
-#     # hard = True
-#     hard = False
-#     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
-#     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
-#     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
-#     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
-#     # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
+def main():
+    exmodel = hmmgaussian(2,1,30,5)
+    numstates = exmodel.numofstates
+    observations = exmodel.observations
+    # hard = True
+    hard = False
+    (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
+    # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+    piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
+    transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
+    # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
 
-#     print "realpie is "
-#     print exmodel.pie
-#     print "estimated pie is"
-#     print pie
-#     print "realtrans"
-#     print exmodel.transitionmtrx
-#     print "estimated transition matrix is"
-#     print transmtrx
-#     print "real obsmtrx"
-#     print exmodel.obsmtrx
-#     print "estimated observation matrix is"
-#     print obsmtrx
+    print "realpie is "
+    print exmodel.pie
+    print "estimated pie is"
+    print pie
+    print "realtrans"
+    print exmodel.transitionmtrx
+    print "estimated transition matrix is"
+    print transmtrx
+    print "real obsmtrx"
+    print exmodel.obsmtrx
+    print "estimated observation matrix is"
+    print obsmtrx
 
-# main()
+main()
