@@ -21,19 +21,17 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         optzis = eps * np.ones((timelength))
         As = eps * np.ones((timelength,numstates))
         # .reshape(-1,1)
-        sortedprobs = (sorted(observations))
-        probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
         probs = eps * np.ones(numstates)
         for state in range(numstates):
             distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-            probs[state] = distr.cdf(observations[0]+probeps) - distr.cdf(observations[0]- probeps)+ eps
+            probs[state] = distr.pdf(observations[0])
         deltas[0,:] = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
         for t in range(1,timelength):
             # set A here
             for j in range(numstates):
                 # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
                 distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
-                prob = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)+ eps
+                prob = distr.pdf(observations[t])
                 normed = normalize((deltas[t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
                 # print normed
                 As[t,j] = int(np.argmax(normed))
@@ -53,12 +51,10 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         optzis = eps *np.ones((numsamples,timelength))
         As = eps * np.ones((numsamples,timelength,numstates))
         for sample in range(numsamples):
-            sortedprobs = (sorted(observations[sample,:]))
-            probeps = 0.1 * (sortedprobs[1] - sortedprobs[0])
             probs = eps * np.ones(numstates)
             for state in range(numstates):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                probs[state] = distr.cdf(observations[sample,0]+probeps) - distr.cdf(observations[sample,0]- probeps)+ eps
+                probs[state] = distr.pdf(observations[sample,0])
             deltas[sample,0,:]  = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
             # otherzero = np.argmax(deltas[sample,0,:])
             for t in range(1,timelength):
@@ -66,7 +62,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
                 for j in range(numstates):
                     # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
                     distr = stats.norm(obsmtrx[j,0], obsmtrx[j,1])
-                    prob = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
+                    prob = distr.pdf(observations[sample,t])
                     normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
                     # print normed
                     As[sample,t,j] = int(np.argmax(normed))
@@ -81,7 +77,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
     return (optzis,deltas)
 
 # def main():
-#     exmodel = hmmgaussian(3,1,20,1)
+#     exmodel = hmmgaussian(3,1,50,3)
 #     observations = exmodel.observations
 #     pie = exmodel.pie
 #     transmtrx = exmodel.transitionmtrx
@@ -89,7 +85,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
 #     seqofstates = exmodel.seqofstates
 #     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations) = forward_backwardcont(transmtrx,obsmtrx,pie,observations)
 #     print "forward_backward acc"
-#     print np.sum(seqofstates == most_likely_seq) / float(exmodel.obserlength)
+#     print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
 #     print "forward acc"
 #     print np.sum(seqofstates==forward_most_likely_seq) / float(exmodel.obserlength)
 #     print "forward_backward prob"
@@ -97,9 +93,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
 #     print "forward prob"
 #     print forward_log_prob_most_likely_seq
 #     (mlpath,deltas) = viterbicont(transmtrx,obsmtrx,pie,observations)
-#     print mlpath
-#     print seqofstates
-    
+#     print "forward_backward is more certain at each time point"
 #     # for i in range(exmodel.obserlength):
 #     #     if max(alphas[i,:]) <= max(gammas[i,:]):
 #     #         numwins +=1

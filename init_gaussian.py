@@ -12,11 +12,12 @@ class hmmgaussian(object):
     '''
 
     
-    def __init__(self,initnumofstate=5,initpiequality = 1 ,initobserlength = 10, initnumsamples = 1):
+    def __init__(self,initnumofstate=5,initpiequality = 1 ,initobserlength = 10, initnumsamples = 1, initclose = False):
         self.numofstates = initnumofstate
         self.piequality = initpiequality
         self.obserlength = initobserlength
         self.numsamples = initnumsamples
+        self.close = initclose
         self.generatepie()
         self.generateobsmtrx()
         self.generatetransitionmtrx()
@@ -30,15 +31,20 @@ class hmmgaussian(object):
         self.obsmtrx = 2.22044604925e-16 * np.ones((self.numofstates,2))
         self.obsmtrxmeanpriors = np.random.permutation(range(1,self.numofstates+1))
         self.obsmtrxvarpriors = np.random.permutation(range(1,self.numofstates+1))
-        for i in range(self.numofstates):
-            (self.obsmtrx)[i,0] = np.random.normal(1.0 / self.obsmtrxmeanpriors[i],1.0 / self.obsmtrxvarpriors[i],size=1)
-            (self.obsmtrx)[i,1] = abs(np.random.normal(self.obsmtrxmeanpriors[i] + (1.0 / self.obsmtrxmeanpriors[i]), self.obsmtrxvarpriors[i] + (1.0 / self.obsmtrxvarpriors[i]),size=1))
+        if self.close == False:
+            for i in range(self.numofstates):
+                (self.obsmtrx)[i,0] = np.random.normal(1.0 / self.obsmtrxmeanpriors[i],1.0 / self.obsmtrxvarpriors[i],size=1)
+                (self.obsmtrx)[i,1] = abs(np.random.normal(self.obsmtrxmeanpriors[i] + (1.0 / self.obsmtrxmeanpriors[i]), self.obsmtrxvarpriors[i] + (1.0 / self.obsmtrxvarpriors[i]),size=1))
+        else:
+            for i in range(self.numofstates):
+                (self.obsmtrx)[i,0] = (self.numofstates + 1) * i - (self.numofstates)
+                (self.obsmtrx)[i,1] = self.numofstates - 1
     def generatetransitionmtrx(self):
         # used dirchlet distribution adding up to one, for probabiliteis of transition in a state
         self.transitionmtrx = 2.22044604925e-16 * np.ones((self.numofstates,self.numofstates))
         self.transitionmtrxpriors = np.random.permutation(range(1,self.numofstates+1))
         for i in range(self.numofstates):
-            (self.transitionmtrx)[i,:] = np.random.dirichlet(np.ones(self.numofstates) / self.transitionmtrxpriors[i],size=1)
+            (self.transitionmtrx)[i,:] = np.random.dirichlet(np.ones(self.numofstates),size=1)
     def generateobservations(self):
         # uses numsamples, numobscases, time length, and initial probability and transition matrix and obsmtrx to generate sequence of states and observations
         if self.numsamples == 1:

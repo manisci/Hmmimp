@@ -11,20 +11,6 @@ from scipy import stats
 #         v = u / Z
 #     return (v,Z)
 
-def clipvalues_prevoverflowfw(vector):
-    eps = 2.22044604925e-16
-    minpie = np.min(vector)
-    maxpie = np.max(vector)
-    vector[np.argmin(vector)] = eps
-    vector[np.argmax(vector)] = 1.0
-    for i in range(np.shape(vector)[0]):
-        if vector[i] < eps:
-            vector[i] = eps +( vector[i] - minpie)
-        if vector[i] == 0:
-            vector[i] =eps 
-       
-    return vector
-
 def backwardcont(transmtrx,obsmtrx,pie,observations):
     ''' Input : Transition matrix, pie, state_observation probs, observations
     Output: betas,  Probablities of observing the rest of the observations from that point on, given that we are at a given state at a give timepoint for each sample'''
@@ -34,20 +20,14 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
         betas = eps * np.ones((timelength,numstates))
-        betas[timelength-1,:] = np.ones((numstates))
+        betas[timelength-1,:] = np.ones((1,numstates))
         # print betas[timelength-1,:]
-        sortedprobs = (sorted(observations))
-        probeps = sortedprobs[1] - sortedprobs[0]
         for t in range(timelength-1,0,-1):
             phi_t = eps * np.ones(numstates)
             for state in range(numstates):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                phi_t[state] = distr.cdf(observations[t]+probeps) - distr.cdf(observations[t]- probeps)
-            interm_result = np.multiply(phi_t , (betas[t,:]))
-            betas[t-1,:] = np.matmul(transmtrx,interm_result)
-            # betas[t-1,:] = clipvalues_prevoverflowfw(betas[t-1,:])
-
-            
+                phi_t[state] = distr.pdf(observations[t])
+            betas[t-1,:] = np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))
     else:
         # multiple samples
         numstates = np.shape(transmtrx)[0]
@@ -55,19 +35,14 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
         timelength = np.shape(observations)[1]
         betas = eps * np.ones((numsamples,timelength,numstates))
         for sample in range(numsamples):
-            sortedprobs = (sorted(observations[sample,:]))
-            probeps = sortedprobs[1] - sortedprobs[0]
             betas[sample,timelength-1,:] = np.ones((1,numstates))
             # print betas[timelength-1,:]
             for t in range(timelength-1,0,-1):
                 phi_t = eps * np.ones(numstates)
                 for state in range(numstates):
-                    probeps = abs((0.1*  obsmtrx[state,1]))
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
-                    phi_t[state] = distr.cdf(observations[sample,t]+probeps) - distr.cdf(observations[sample,t]- probeps)+ eps
+                    phi_t[state] = distr.pdf(observations[sample,t])
                 betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
-                # betas[sample,t-1,:] = clipvalues_prevoverflowfw(betas[sample,t-1,:])
-
 
     return betas
 
