@@ -59,13 +59,15 @@ def initialize_with_kmeans(observations,numstates,numsamples,exmodel):
     for state in range(numstates):
         vals.append([])
     obsmtrx = eps * np.ones((numstates,2))
+    observations = np.ndarray.flatten(observations)
     kmeans = KMeans(n_clusters=numstates, random_state=0).fit(observations)
     clusterpreds = kmeans.labels_
-    for sample in range(numsamples):
-        vals[clusterpreds[sample]].append(observations[sample])
+    print len(observations)
+    for obsidx in range(len(observations)):
+        vals[clusterpreds[obsidx]].append(observations[obsidx])
     for state in range(numstates):
         obsmtrx[state,0] = np.mean(vals[state])
-        obsmtrx[state,1] = np.var(vals[state]) + eps
+        obsmtrx[state,1] = np.std(vals[state])
     return (pie,transmtrx,obsmtrx)
 
 def computeloglikelihood(pie,transmtrx,obsmtrx,observations):
@@ -252,12 +254,12 @@ def initializeparameters(observations,numstates,numsamples):
     obsmtrx = eps * np.ones((numstates,2))
     for i in range(numstates):
         obsmtrx[i,0] = obsmean + abs(np.random.normal(0,1,1))
-        obsmtrx[i,1] = obsvar + abs(np.random.normal(0,1,1))
+        obsmtrx[i,1] = np.sqrt(obsvar + abs(np.random.normal(0,1,1)))
     return (pie,transmtrx,obsmtrx)
 
 def initializeparameters_closetoreality(observations,numstates,numsamples,exmodel):
     eps = 2.22044605e-16
-    scale = 0.1
+    scale = 0.8
     pie = np.array(normalize((exmodel.pie + abs(np.random.normal(0,scale,numstates))).reshape(1, -1),norm = 'l1'))[0]
     transmtrx = eps * np.ones ((numstates,numstates))
     for i in range(numstates):
@@ -340,12 +342,13 @@ def M_step(gammas,kissies,observations,hard = False):
                 for time in range(timelength):
                     for sample in range(numsamples):
                         meanreprval += gammas[sample,time,state] * observations[sample,time]
+                print np.sum(gammas[:,:,state])
                 meanak = meanreprval / np.sum(gammas[:,:,state])
                 for time2 in range(timelength):
                     for sample in range(numsamples):
                         varreprval += gammas[sample,time2,state] * (((observations[sample,time2]) - meanak) ** 2)
                 newobsmtrx[state,0] = meanreprval / np.sum(gammas[:,:,state])
-                newobsmtrx[state,1] = varreprval / np.sum(gammas[:,:,state])
+                newobsmtrx[state,1] = np.sqrt(varreprval / np.sum(gammas[:,:,state]))
         else:
             assignments = []
             for i in range(numstate):
@@ -357,7 +360,7 @@ def M_step(gammas,kissies,observations,hard = False):
             for state in range(numstate):
                 if len(assignments[state]) >= 1:
                     newobsmtrx[state,0] = np.mean(assignments[state])
-                    newobsmtrx[state,1] = np.var(assignments[state]) 
+                    newobsmtrx[state,1] = np.sqrt(np.var(assignments[state]) )
 
     else:
         # single observation
@@ -384,7 +387,7 @@ def M_step(gammas,kissies,observations,hard = False):
                 # print "numerator is"
                 # print numerator
                 newobsmtrx[state,0] = meanreprval / np.sum(gammas[:,state])
-                newobsmtrx[state,1] = varreprval / np.sum(gammas[:,state])
+                newobsmtrx[state,1] = np.sqrt(varreprval / np.sum(gammas[:,state]))
         else:
             assignments = []
             for i in range(numstate):
@@ -395,7 +398,7 @@ def M_step(gammas,kissies,observations,hard = False):
             for state in range(numstate):
                 if len(assignments[state]) >= 1:
                     newobsmtrx[state,0] = np.mean(assignments[state])
-                    newobsmtrx[state,1] = np.var(assignments[state])
+                    newobsmtrx[state,1] = np.sqrt(np.var(assignments[state]))
     # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
 
@@ -418,12 +421,14 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     else:
         numsamples = 1
     # initialization
-    (pie,transmtrx,obsmtrx )= initialize_with_kmeans(observations,numstates,numsamples,exmodel)
+    # (pie,transmtrx,obsmtrx )= initialize_with_kmeans(observations,numstates,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
-    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
+    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+    print "init observation matrix is "
+    print obsmtrx
     noiterations = 100
-    conv_threshold = 1e-4
+    conv_threshold = 1e-10
     diff_consec_params = 100
     likelihoods = []
     counter = 0
@@ -438,12 +443,12 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     while(diffprobproduct > conv_threshold):
         (gammas,kissies,logobservations) = E_step(pie,transmtrx,obsmtrx,observations)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations,hard)
-        print "pie is"
-        print pie
-        print "obsmtrx is"
+        # print "pie is"
+        # print pie
+        # print "obsmtrx is"
         print obsmtrx
-        print "transmtrx is"
-        print transmtrx
+        # print "transmtrx is"
+        # print transmtrx
 
         likelihoods.append(np.log(logobservations))
         counter +=1
@@ -461,15 +466,15 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmgaussian(2,2,5,30, True)
+    exmodel = hmmgaussian(2,2,10,100, True)
     numstates = exmodel.numofstates
     observations = exmodel.observations
-    print "sequence of states is"
-    print exmodel.seqofstates
+    # print "sequence of states is"
+    # print exmodel.seqofstates
     print "real mean is"
     print np.mean(observations)
-    print "real var is"
-    print np.var(observations)
+    print "real std is"
+    print np.std(observations)
     # hard = True
     hard = False
     print "realpie is "

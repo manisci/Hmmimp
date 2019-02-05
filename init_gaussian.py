@@ -38,7 +38,7 @@ class hmmgaussian(object):
         else:
             for i in range(self.numofstates):
                 (self.obsmtrx)[i,0] = (self.numofstates + 1) * i - (self.numofstates)
-                (self.obsmtrx)[i,1] = self.numofstates - 1
+                (self.obsmtrx)[i,1] = self.numofstates
     def generatetransitionmtrx(self):
         # used dirchlet distribution adding up to one, for probabiliteis of transition in a state
         self.transitionmtrx = 2.22044604925e-16 * np.ones((self.numofstates,self.numofstates))
