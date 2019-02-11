@@ -65,8 +65,8 @@ def test_Baumwelch(nums,piequality,numobservs,numsamples,Distinctness):
     obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
     assert abs(np.max(pie) - np.max(exmodel.pie)) < 0.4
     assert abs(np.min(pie) - np.min(exmodel.pie)) < 0.4
-    assert abs(np.max(transmtrx) - np.max(exmodel.transitionmtrx))< 0.3
-    assert abs(np.min(transmtrx) - np.min(exmodel.transitionmtrx))< 0.3
+    assert abs(np.max(transmtrx) - np.max(exmodel.transitionmtrx))< 0.4
+    assert abs(np.min(transmtrx) - np.min(exmodel.transitionmtrx))< 0.4
     assert abs(np.max(obsmtrx[:,1]) - np.max(exmodel.obsmtrx[:,1])) < 2.5
     assert abs(np.min(obsmtrx[:,1]) - np.min(exmodel.obsmtrx[:,1]))< 2.5
     assert abs(np.max(obsmtrx[:,0]) - np.max(exmodel.obsmtrx[:,0])) < 0.8
