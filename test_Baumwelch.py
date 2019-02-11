@@ -27,7 +27,7 @@ def test_Baumwelch(hmmexample):
     realpie = np.array([1,0])
     # print gammas
     # print most_likely_seq
-    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,hmmexample)
+    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,1,hmmexample)
     # assert (np.sum(pie - realpie) / float(numstates))  < 0.01
     print transmtrx
     print realtransmtrx
@@ -66,7 +66,7 @@ def test_Baumwelch2(hmmexample):
     realpie = hmmexample.pie
     # print gammas
     # print most_likely_seq
-    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,hmmexample)
+    (pie,transmtrx,obsmtrx) = Baumwelch(observations,numstates,numobscases,1,hmmexample)
     # assert (np.sum(pie - realpie) / float(numstates))  < 0.01
     assert np.sum(transmtrx - realtransmtrx) /float(numstates**2) < 0.01 
     assert np.sum(obsmtrx - realobsmtrx) /float(numstates*numobscases) < 0.01 

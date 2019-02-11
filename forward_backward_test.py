@@ -14,7 +14,7 @@ def normalize(u):
         v = u / Z
     return (v,Z)
 
-@pytest.mark.parametrize("nums,numobscase,piequality,numobservs",[(5,10,2,500),(2,4,1,500),(8,20,1,1000),(4,16,1,50)])
+@pytest.mark.parametrize("nums,numobscase,piequality,numobservs",[(5,10,2,150),(2,4,1,50),(8,20,1,100),(4,16,1,50)])
 
 
 
@@ -35,7 +35,7 @@ def test_foward_backward(nums,numobscase,piequality,numobservs):
         most_likely_seq[t] = np.argmax(gammas[t,:])
     log_prob_most_likely_seq = np.sum(np.log(Zis) + 2.22044604925e-16)
     assert (sum([max(alphas[i,:]) <= max(gammas[i,:]) for i in range(timelength)]) / float(timelength) )> 0.1
-    assert abs(np.sum(gammas[0,]) - 1 )< 0.01
+    assert abs(np.sum(gammas[0,:]) - 1 )< 0.01
     assert np.sum(np.isinf(gammas)) == 0
     assert np.sum(np.isinf(alphas)) == 0
     assert np.sum(np.isinf(betas)) == 0

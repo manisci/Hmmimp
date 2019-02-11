@@ -60,9 +60,9 @@ def initialize_with_kmeans(observations,numstates,numsamples,exmodel):
         vals.append([])
     obsmtrx = eps * np.ones((numstates,2))
     observations = np.ndarray.flatten(observations)
-    kmeans = KMeans(n_clusters=numstates, random_state=0).fit(observations)
+    kmeans = KMeans(n_clusters=numstates, random_state=0).fit(observations.reshape(-1, 1))
     clusterpreds = kmeans.labels_
-    print len(observations)
+    # print len(observations)
     for obsidx in range(len(observations)):
         vals[clusterpreds[obsidx]].append(observations[obsidx])
     for state in range(numstates):
@@ -274,6 +274,8 @@ def E_step(pie,transmtrx,obsmtrx,observations):
     eps = 2.22044605e-16
     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Zis,logobservations) = \
     forward_backwardcont(transmtrx,obsmtrx,pie,observations)
+    # print 'dear gammas'
+    # print gammas
     # print " in E step after forward backward"
     # print np.shape(gammas)    
     # print log_prob_most_likely_seq
@@ -342,13 +344,15 @@ def M_step(gammas,kissies,observations,hard = False):
                 for time in range(timelength):
                     for sample in range(numsamples):
                         meanreprval += gammas[sample,time,state] * observations[sample,time]
-                print np.sum(gammas[:,:,state])
+                # print np.sum(gammas[:,:,state])
                 meanak = meanreprval / np.sum(gammas[:,:,state])
                 for time2 in range(timelength):
                     for sample in range(numsamples):
                         varreprval += gammas[sample,time2,state] * (((observations[sample,time2]) - meanak) ** 2)
                 newobsmtrx[state,0] = meanreprval / np.sum(gammas[:,:,state])
                 newobsmtrx[state,1] = np.sqrt(varreprval / np.sum(gammas[:,:,state]))
+                if newobsmtrx[state,1] == 0:
+                    raise ValueError("Too many states, either initialize again, or reduce the number of states by one")
         else:
             assignments = []
             for i in range(numstate):
@@ -361,6 +365,8 @@ def M_step(gammas,kissies,observations,hard = False):
                 if len(assignments[state]) >= 1:
                     newobsmtrx[state,0] = np.mean(assignments[state])
                     newobsmtrx[state,1] = np.sqrt(np.var(assignments[state]) )
+                if newobsmtrx[state,1] == 0:
+                    raise ValueError("Too many states, either initialize again, or reduce the number of states by one")
 
     else:
         # single observation
@@ -388,6 +394,8 @@ def M_step(gammas,kissies,observations,hard = False):
                 # print numerator
                 newobsmtrx[state,0] = meanreprval / np.sum(gammas[:,state])
                 newobsmtrx[state,1] = np.sqrt(varreprval / np.sum(gammas[:,state]))
+                if newobsmtrx[state,1] == 0:
+                    raise ValueError("Too many states, either initialize again, or reduce the number of states by one")
         else:
             assignments = []
             for i in range(numstate):
@@ -399,10 +407,12 @@ def M_step(gammas,kissies,observations,hard = False):
                 if len(assignments[state]) >= 1:
                     newobsmtrx[state,0] = np.mean(assignments[state])
                     newobsmtrx[state,1] = np.sqrt(np.var(assignments[state]))
+                if newobsmtrx[state,1] == 0:
+                    raise ValueError("Too many states, either initialize again, or reduce the number of states by one")
     # (newpie,newtransmtrx,newobsmtrx,gammas,kissies) = clipvalues_prevunderflow(newpie,newtransmtrx,newobsmtrx,gammas,kissies)
     return (newpie,newtransmtrx,newobsmtrx)
 
-def Baumwelchcont(observations,numstates,exmodel,hard = False):
+def Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1e-16 ):
     eps = 2.22044605e-16
     ''' Uses an EM moedel and maximul likelihood estimation to learn the parameteres of an HMM model given the observations 
     In order to compute log likelihood, probabilitey of seeing the observations given the model at that iteration is used. 
@@ -421,15 +431,15 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
     else:
         numsamples = 1
     # initialization
-    # (pie,transmtrx,obsmtrx )= initialize_with_kmeans(observations,numstates,numsamples,exmodel)
+    if numsamples > 1 :
+        (pie,transmtrx,obsmtrx )= initialize_with_kmeans(observations,numstates,numsamples,exmodel)
+    else:
+        (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx )= initializeparameters(observations,numstates,numsamples)
-    (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
+    # (pie,transmtrx,obsmtrx )= initializeparameters_closetoreality(observations,numstates,numsamples,exmodel)
     # (pie,transmtrx,obsmtrx ) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
-    print "init observation matrix is "
-    print obsmtrx
-    noiterations = 100
-    conv_threshold = 1e-10
-    diff_consec_params = 100
+    # print "init observation matrix is "
+    # print obsmtrx
     likelihoods = []
     counter = 0
     diffprobproduct = 1.0
@@ -458,47 +468,52 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False):
             diffprobproduct = abs(np.max(prevlogobservation - logobservations))
         # print diffprobproduct
         prevlogobservation = logobservations
-    print counter
+    # print counter
     title = "likelihoodtrend.png"
-    plt.plot(range(counter),likelihoods)
+    if numsamples ==1:
+        plt.plot(range(counter),likelihoods)
+    else:
+        plt.plot(range(counter),np.mean(likelihoods,axis=1,dtype=np.float64))
     plt.savefig(title)
     
     return (pie,transmtrx,obsmtrx) 
 
-def main():
-    exmodel = hmmgaussian(2,2,10,100, True)
-    numstates = exmodel.numofstates
-    observations = exmodel.observations
-    # print "sequence of states is"
-    # print exmodel.seqofstates
-    print "real mean is"
-    print np.mean(observations)
-    print "real std is"
-    print np.std(observations)
-    # hard = True
-    hard = False
-    print "realpie is "
-    print exmodel.pie
-    print "realtrans"
-    print exmodel.transitionmtrx
-    print "real obsmtrx"
-    print exmodel.obsmtrx
-    (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard)
-    # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
-    piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
-    transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
-    # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
-    print "realpie is "
-    print exmodel.pie
-    print "estimated pie is"
-    print pie
-    print "realtrans"
-    print exmodel.transitionmtrx
-    print "estimated transition matrix is"
-    print transmtrx
-    print "real obsmtrx"
-    print exmodel.obsmtrx
-    print "estimated observation matrix is"
-    print obsmtrx
+# def main():
+#     exmodel = hmmgaussian(3,2,10,10, True)
+#     numstates = exmodel.numofstates
+#     observations = exmodel.observations
+#     # print "sequence of states is"
+#     # print exmodel.seqofstates
+#     print "real mean is"
+#     print np.mean(observations)
+#     print "real std is"
+#     print np.std(observations)
+#     # hard = True
+#     hard = False
+#     print "realpie is "
+#     print exmodel.pie
+#     print "realtrans"
+#     print exmodel.transitionmtrx
+#     print "real obsmtrx"
+#     print exmodel.obsmtrx
+#     sensitivity = 16
+#     threshold_exponential = 10 ** (-sensitivity)
+#     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
+#     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+#     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
+#     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
+#     # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
+#     print "realpie is "
+#     print exmodel.pie
+#     print "estimated pie is"
+#     print pie
+#     print "realtrans"
+#     print exmodel.transitionmtrx
+#     print "estimated transition matrix is"
+#     print transmtrx
+#     print "real obsmtrx"
+#     print exmodel.obsmtrx
+#     print "estimated observation matrix is"
+#     print obsmtrx
 
-main()
+# main()
