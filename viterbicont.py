@@ -43,7 +43,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
         optzis[timelength-1] = int(np.argmax(deltas[timelength-1,:]))
         for k in range(timelength-2,-1,-1):
             optzis[k] = As[k+1,int(optzis[k+1])]
-    else:
+    elif len(np.shape(observations)) == 2:
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[1]
         numsamples = np.shape(observations)[0]
@@ -73,7 +73,44 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
                 deltas[sample,t,:] = normalize(deltas[sample,t,:].reshape(1, -1),norm = 'l1')
             optzis[sample,timelength-1] = int(np.argmax(deltas[sample,timelength-1,:]))
             for k in range(timelength-2,-1,-1):
-                optzis[sample,k] = As[sample,k+1,int(optzis[sample,k+1])]       
+                optzis[sample,k] = As[sample,k+1,int(optzis[sample,k+1])]     
+    else:
+        # multiple features case
+        numstates = np.shape(transmtrx)[0]
+        numfeats = np.shape(observations)[1]
+        timelength = np.shape(observations)[2]
+        numsamples = np.shape(observations)[0]
+        deltas = eps * np.ones((numsamples,timelength,numstates))
+        optzis = eps *np.ones((numsamples,timelength))
+        As = eps * np.ones((numsamples,timelength,numstates))
+        for sample in range(numsamples):
+            probs = np.ones(numstates)
+            for state in range(numstates):
+                for feat in range(numfeats):
+                    distr = stats.norm(obsmtrx[feat,state,0], obsmtrx[feat,state,1])
+                    probs[state] *= distr.pdf(observations[sample,feat,0])
+            deltas[sample,0,:]  = normalize((np.multiply(probs,pie)).reshape(1, -1),norm = 'l1')
+            # otherzero = np.argmax(deltas[sample,0,:])
+            for t in range(1,timelength):
+                # set A here
+                for j in range(numstates):
+                    # print deltas[t-1,:] * transmtrx[:,j] * obsmtrx[j,int(observations[t])]
+                    prob = 1.0
+                    for feat in range(numfeats):
+                        distr = stats.norm(obsmtrx[feat,j,0], obsmtrx[feat,j,1])
+                        prob *= distr.pdf(observations[sample,feat])
+                    normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
+                    # print normed
+                    As[sample,t,j] = int(np.argmax(normed))
+                    cands = eps * np.ones((numstates))
+                    for i in range(numstates):
+                        cands[i] = deltas[sample,t-1,i] *(transmtrx[i,j]) *(prob)
+                    deltas[sample,t,j] = max(cands)
+                deltas[sample,t,:] = normalize(deltas[sample,t,:].reshape(1, -1),norm = 'l1')
+            optzis[sample,timelength-1] = int(np.argmax(deltas[sample,timelength-1,:]))
+            for k in range(timelength-2,-1,-1):
+                optzis[sample,k] = As[sample,k+1,int(optzis[sample,k+1])]     
+
     return (optzis,deltas)
 
 # def main():

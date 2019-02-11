@@ -12,12 +12,13 @@ class hmmgaussian(object):
     '''
 
     
-    def __init__(self,initnumofstate=5,initpiequality = 1 ,initobserlength = 10, initnumsamples = 1, initclose = False):
+    def __init__(self,initnumofstate=5,initpiequality = 1 ,initobserlength = 10, initnumsamples = 1, initnumfeats= 1, initclose = False):
         self.numofstates = initnumofstate
         self.piequality = initpiequality
         self.obserlength = initobserlength
         self.numsamples = initnumsamples
         self.close = initclose
+        self.numfeats = initnumfeats
         self.generatepie()
         self.generateobsmtrx()
         self.generatetransitionmtrx()
@@ -28,17 +29,31 @@ class hmmgaussian(object):
         self.pie = np.random.dirichlet(np.ones(self.numofstates) * self.piequality,size=1)[0]
     def generateobsmtrx(self):
         # used dirchlet distribution adding up to one for probabiliteis of  obervations in a single state
-        self.obsmtrx = 2.22044604925e-16 * np.ones((self.numofstates,2))
-        self.obsmtrxmeanpriors = np.random.permutation(range(1,self.numofstates+1))
-        self.obsmtrxvarpriors = np.random.permutation(range(1,self.numofstates+1))
-        if self.close == False:
-            for i in range(self.numofstates):
-                (self.obsmtrx)[i,0] = np.random.normal(1.0 / self.obsmtrxmeanpriors[i],1.0 / self.obsmtrxvarpriors[i],size=1)
-                (self.obsmtrx)[i,1] = abs(np.random.normal(self.obsmtrxmeanpriors[i] + (1.0 / self.obsmtrxmeanpriors[i]), self.obsmtrxvarpriors[i] + (1.0 / self.obsmtrxvarpriors[i]),size=1))
+        if self.numfeats == 1 :
+            self.obsmtrx = 2.22044604925e-16 * np.ones((self.numofstates,2))
+            self.obsmtrxmeanpriors = np.random.permutation(range(1,self.numofstates+1))
+            self.obsmtrxvarpriors = np.random.permutation(range(1,self.numofstates+1))
+            if self.close == False:
+                for i in range(self.numofstates):
+                    (self.obsmtrx)[i,0] = np.random.normal(1.0 / self.obsmtrxmeanpriors[i],1.0 / self.obsmtrxvarpriors[i],size=1)
+                    (self.obsmtrx)[i,1] = abs(np.random.normal(self.obsmtrxmeanpriors[i] + (1.0 / self.obsmtrxmeanpriors[i]), self.obsmtrxvarpriors[i] + (1.0 / self.obsmtrxvarpriors[i]),size=1))
+            else:
+                for i in range(self.numofstates):
+                    (self.obsmtrx)[i,0] = (self.numofstates + 1) * i - (self.numofstates)
+                    (self.obsmtrx)[i,1] = self.numofstates
         else:
-            for i in range(self.numofstates):
-                (self.obsmtrx)[i,0] = (self.numofstates + 1) * i - (self.numofstates)
-                (self.obsmtrx)[i,1] = self.numofstates
+            self.obsmtrx = 2.22044604925e-16 * np.ones((self.numfeats,self.numofstates,2))
+            for feat in range(self.numfeats):
+                self.obsmtrxmeanpriors = np.random.permutation(range(1,self.numofstates+1))
+                self.obsmtrxvarpriors = np.random.permutation(range(1,self.numofstates+1))
+                if self.close == False:
+                    for i in range(self.numofstates):
+                        (self.obsmtrx)[feat,i,0] = np.random.normal(1.0 / self.obsmtrxmeanpriors[i],1.0 / self.obsmtrxvarpriors[i],size=1)
+                        (self.obsmtrx)[feat,i,1] = abs(np.random.normal(self.obsmtrxmeanpriors[i] + (1.0 / self.obsmtrxmeanpriors[i]), self.obsmtrxvarpriors[i] + (1.0 / self.obsmtrxvarpriors[i]),size=1))
+                else:
+                    for i in range(self.numofstates):
+                        (self.obsmtrx)[feat,i,0] = ((feat +1 ) / float(self.numfeats) )* (self.numofstates + 1) * i - (self.numofstates)
+                        (self.obsmtrx)[feat,i,1] = ((feat +1) / float(self.numfeats) )*self.numofstates
     def generatetransitionmtrx(self):
         # used dirchlet distribution adding up to one, for probabiliteis of transition in a state
         self.transitionmtrx = 2.22044604925e-16 * np.ones((self.numofstates,self.numofstates))
@@ -48,39 +63,79 @@ class hmmgaussian(object):
     def generateobservations(self):
         # uses numsamples, numobscases, time length, and initial probability and transition matrix and obsmtrx to generate sequence of states and observations
         if self.numsamples == 1:
-            self.observations = 2.22044604925e-16 *np.ones((self.obserlength),dtype = numpy.int8)
-            self.seqofstates = 2.22044604925e-16 *np.ones((self.obserlength))
-            # available choices for states and setting the initial state based on pie
-            elements = range(self.numofstates)
-            initialstate = np.random.choice(elements, 1, p=self.pie)[0]
-            # available choices for observations
-            # setting first observation 
-            (self.observations)[0] = np.random.normal((self.obsmtrx)[initialstate,0],(self.obsmtrx)[initialstate,1])
-            prevstate = initialstate
-            (self.seqofstates)[0] = initialstate
-            for i in range(1,self.obserlength):
-                # choosing next state based on the transition matrix
-                elements = range(self.numofstates)
-                nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
-                # choosing next observation based on the new state
-                (self.observations)[i] = np.random.normal((self.obsmtrx)[nextstate,0],(self.obsmtrx)[nextstate,1])
-                (self.seqofstates)[i] = (nextstate)
-                prevstate = nextstate
-        else:
-            self.observations = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength),dtype = numpy.int8)
-            self.seqofstates = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength))
-            for samnum in range(self.numsamples):
+            if self.numfeats == 1:
+                self.observations = 2.22044604925e-16 *np.ones((self.obserlength),dtype = numpy.int8)
+                self.seqofstates = 2.22044604925e-16 *np.ones((self.obserlength))
+                # available choices for states and setting the initial state based on pie
                 elements = range(self.numofstates)
                 initialstate = np.random.choice(elements, 1, p=self.pie)[0]
-                (self.observations)[samnum,0] = np.random.normal((self.obsmtrx)[initialstate,0],(self.obsmtrx)[initialstate,1])
+                # available choices for observations
+                # setting first observation 
+                (self.observations)[0] = np.random.normal((self.obsmtrx)[initialstate,0],(self.obsmtrx)[initialstate,1])
                 prevstate = initialstate
-                (self.seqofstates)[samnum,0] = initialstate
+                (self.seqofstates)[0] = initialstate
                 for i in range(1,self.obserlength):
+                    # choosing next state based on the transition matrix
                     elements = range(self.numofstates)
                     nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
-                    (self.observations)[samnum,i] = np.random.normal((self.obsmtrx)[nextstate,0],(self.obsmtrx)[nextstate,1])
-                    (self.seqofstates)[samnum,i] = (nextstate)
+                    # choosing next observation based on the new state
+                    (self.observations)[i] = np.random.normal((self.obsmtrx)[nextstate,0],(self.obsmtrx)[nextstate,1])
+                    (self.seqofstates)[i] = (nextstate)
                     prevstate = nextstate
+            else:
+                self.observations = 2.22044604925e-16 *np.ones((self.numfeats,self.obserlength),dtype = numpy.int8)
+                self.seqofstates = 2.22044604925e-16 *np.ones((self.numfeats,self.obserlength))
+                # available choices for states and setting the initial state based on pie
+                for feat in range(self.numfeats):
+                    elements = range(self.numofstates)
+                    initialstate = np.random.choice(elements, 1, p=self.pie)[0]
+                    # available choices for observations
+                    # setting first observation 
+                    (self.observations)[feat,0] = np.random.normal((self.obsmtrx)[feat,initialstate,0],(self.obsmtrx)[feat,initialstate,1])
+                    prevstate = initialstate
+                    (self.seqofstates)[0] = initialstate
+                    for i in range(1,self.obserlength):
+                        # choosing next state based on the transition matrix
+                        elements = range(self.numofstates)
+                        nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                        # choosing next observation based on the new state
+                        (self.observations)[feat,i] = np.random.normal((self.obsmtrx)[feat,nextstate,0],(self.obsmtrx)[feat,nextstate,1])
+                        (self.seqofstates)[feat,i] = (nextstate)
+                        prevstate = nextstate
+        else:
+            if self.numfeats == 1:
+                self.observations = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength),dtype = numpy.int8)
+                self.seqofstates = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength))
+                for samnum in range(self.numsamples):
+                    elements = range(self.numofstates)
+                    initialstate = np.random.choice(elements, 1, p=self.pie)[0]
+                    (self.observations)[samnum,0] = np.random.normal((self.obsmtrx)[initialstate,0],(self.obsmtrx)[initialstate,1])
+                    prevstate = initialstate
+                    (self.seqofstates)[samnum,0] = initialstate
+                    for i in range(1,self.obserlength):
+                        elements = range(self.numofstates)
+                        nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                        (self.observations)[samnum,i] = np.random.normal((self.obsmtrx)[nextstate,0],(self.obsmtrx)[nextstate,1])
+                        (self.seqofstates)[samnum,i] = (nextstate)
+                        prevstate = nextstate
+            else:
+                self.observations = 2.22044604925e-16 * np.ones((self.numsamples,self.numfeats,self.obserlength),dtype = numpy.int8)
+                self.seqofstates = 2.22044604925e-16 * np.ones((self.numsamples,self.numfeats,self.obserlength))
+                for feat in range(self.numfeats):
+                    for samnum in range(self.numsamples):
+                        elements = range(self.numofstates)
+                        initialstate = np.random.choice(elements, 1, p=self.pie)[0]
+                        (self.observations)[samnum,feat,0] = np.random.normal((self.obsmtrx)[feat,initialstate,0],(self.obsmtrx)[feat,initialstate,1])
+                        prevstate = initialstate
+                        (self.seqofstates)[samnum,feat,0] = initialstate
+                        for i in range(1,self.obserlength):
+                            elements = range(self.numofstates)
+                            nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                            (self.observations)[samnum,feat,i] = np.random.normal((self.obsmtrx)[feat,nextstate,0],(self.obsmtrx)[feat,nextstate,1])
+                            (self.seqofstates)[samnum,feat,i] = (nextstate)
+                            prevstate = nextstate
+                
+                
         
 # just testing
 # def main():

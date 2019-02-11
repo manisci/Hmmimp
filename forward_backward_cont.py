@@ -84,7 +84,7 @@ def forward_backwardcont(transmtrx,obsmtrx,pie,observations):
                 most_likely_seq[sample,t] = np.argmax(gammas[sample,t,:])
             # (alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis) = clipvalues_prevunderflowfw(alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis)
             log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]))
-    else:
+    elif len(np.shape(observations)) == 1:
         # print "I'm in the right  place"
         numstates = np.shape(transmtrx)[0]
         timelength = np.shape(observations)[0]
@@ -103,6 +103,27 @@ def forward_backwardcont(transmtrx,obsmtrx,pie,observations):
             most_likely_seq[t] = np.argmax(gammas[t,:])
         # (alphas,betas,gammas,Ziis) = clipvalues_prevunderflowfw(alphas,betas,gammas,Ziis)
         log_prob_most_likely_seq = np.sum(np.log(Zis[:]))
+    else:
+        numstates = np.shape(transmtrx)[0]
+        numfeats = np.shape(observations)[2]
+        timelength = np.shape(observations)[2]
+        numsamples = np.shape(observations)[0]
+        gammas = eps * np.ones((numsamples,timelength,numstates))
+        (alphas,forward_log_prob_most_likely_seq,forward_most_likely_seq,Ziis,logobservations) = forwardcont(transmtrx,obsmtrx,pie,observations)
+        betas = backwardcont(transmtrx,obsmtrx,pie,observations)
+        Zis = eps * np.ones((numsamples,timelength))
+        most_likely_seq = eps * np.ones((numsamples,timelength))
+        log_prob_most_likely_seq = eps * np.ones((numsamples))
+        for sample in range(numsamples):
+            for i in range(timelength):
+                betas[sample,i,:] /= float(Ziis[sample,i])
+        for sample in range(numsamples):
+            for t in range(timelength):
+                gammas[sample,t,:] = normalize(np.multiply(alphas[sample,t,:],betas[sample,t,:]).reshape(1, -1),norm = 'l1')
+                most_likely_seq[sample,t] = np.argmax(gammas[sample,t,:])
+            # (alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis) = clipvalues_prevunderflowfw(alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis)
+            log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]))
+
 
 
     return (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations)

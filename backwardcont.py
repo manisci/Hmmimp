@@ -28,7 +28,7 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
                 distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                 phi_t[state] = distr.pdf(observations[t])
             betas[t-1,:] = np.matmul(transmtrx,np.multiply(phi_t , (betas[t,:])))
-    else:
+    elif len(np.shape(observations)) == 2:
         # multiple samples
         numstates = np.shape(transmtrx)[0]
         numsamples = np.shape(observations)[0]
@@ -42,6 +42,22 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
                 for state in range(numstates):
                     distr = stats.norm(obsmtrx[state,0], obsmtrx[state,1])
                     phi_t[state] = distr.pdf(observations[sample,t])
+                betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
+    else:
+        numstates = np.shape(transmtrx)[0]
+        numsamples = np.shape(observations)[0]
+        numfeats = np.shape(observations)[1]
+        timelength = np.shape(observations)[2]
+        betas = eps * np.ones((numsamples,timelength,numstates))
+        for sample in range(numsamples):
+            betas[sample,timelength-1,:] = np.ones((1,numstates))
+            # print betas[timelength-1,:]
+            for t in range(timelength-1,0,-1):
+                phi_t =  np.ones(numstates)
+                for state in range(numstates):
+                    for feat in range(numfeats):
+                        distr = stats.norm(obsmtrx[feat,state,0], obsmtrx[feat,state,1])
+                        phi_t[state] *= distr.pdf(observations[sample,feat,t])
                 betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
 
     return betas
