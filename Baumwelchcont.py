@@ -83,7 +83,13 @@ def initialize_with_kmeans(observations,numstates,numsamples,exmodel):
                 vals[clusterpreds[obsidx]].append(flatobservations[obsidx])
             for state in range(numstates):
                 obsmtrx[feat,state,0] = np.mean(vals[state])
-                obsmtrx[feat,state,1] = np.std(vals[state])
+                if np.std(vals[state]) > 0.01:
+                    obsmtrx[feat,state,1] = np.std(vals[state])
+                else:
+                    # print "one of the states was not assigned any sample, and thus has zero variance, will run kmeans again"
+                    # main()
+                    # break
+                    raise ValueError("one of the states was not assigned any sample, and thus has zero variance, run the kmeans again")
 
 
     return (pie,transmtrx,obsmtrx)
@@ -200,20 +206,6 @@ def testprobabilities(pie,transmtrx,obsmtrx):
         print "sth wrong in pie"
         print pie
 
-# def clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies):
-#     pie = np.clip(pie,2.22044604925e-16,1.0)
-#     transmtrx = np.clip(transmtrx,2.22044604925e-16,1.0)
-#     obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
-#     gammas = np.clip(gammas,2.22044604925e-16,1.0)
-#     kissies = np.clip(kissies,2.22044604925e-16,1.0)
-#     return (pie,transmtrx,obsmtrx,gammas,kissies)
-
-# def clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx):
-#     pie = np.clip(pie,2.22044604925e-16,1.0)
-#     transmtrx = np.clip(transmtrx,2.22044604925e-16,1.0)
-#     obsmtrx = np.clip(obsmtrx,2.22044604925e-16,1.0)
-#     return (pie,transmtrx,obsmtrx)
- 
 def clipvalues_prevunderflow(pie,transmtrx,obsmtrx,gammas,kissies):
     eps = 2.22044604925e-16
     minpie = np.min(pie)
@@ -459,10 +451,10 @@ def M_step(gammas,kissies,observations,hard = False):
         numstate = np.shape(gammas)[2]
         timelength = np.shape(gammas)[1]
         newpie = eps *np.ones((numstate))
-        newtransmtrx = eps * np.ones((numstate,numstate))
-        newobsmtrx = eps * np.ones((numstate,2))
-        numsamples = np.shape(gammas)[0]
         numfeats = np.shape(observations)[1]
+        newtransmtrx = eps * np.ones((numstate,numstate))
+        newobsmtrx = eps * np.ones((numfeats,numstate,2))
+        numsamples = np.shape(gammas)[0]
         for i in range(numstate):
             newpie[i] = np.mean((gammas[:,0,i]))
         for q in range(numstate):
@@ -482,7 +474,7 @@ def M_step(gammas,kissies,observations,hard = False):
                     for time2 in range(timelength):
                         for sample in range(numsamples):
                             varreprval += gammas[sample,time2,state] * (((observations[sample,feat,time2]) - meanak) ** 2)
-                    newobsmtrx[feat,state,0] = meanreprval / np.sum(gammas[:,:,state])
+                    newobsmtrx[feat,state,0] = meanreprval /float( np.sum(gammas[:,:,state]))
                     newobsmtrx[feat,state,1] = np.sqrt(varreprval / np.sum(gammas[:,:,state]))
                     if newobsmtrx[feat,state,1] == 0:
                         raise ValueError("Too many states, either initialize again, or reduce the number of states by one")
@@ -561,6 +553,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1
             diffprobproduct = abs(np.mean(prevlogobservation - logobservations))
         # print diffprobproduct
         prevlogobservation = logobservations
+        print "did one iteration"
     # print counter
     title = "likelihoodtrend.png"
     if numsamples ==1:
@@ -572,7 +565,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmgaussian(3,2,10,10,2, True)
+    exmodel = hmmgaussian(3,4,10,10,3, True)
     numstates = exmodel.numofstates
     observations = exmodel.observations
     # print "sequence of states is"
@@ -589,7 +582,7 @@ def main():
     print exmodel.transitionmtrx
     print "real obsmtrx"
     print exmodel.obsmtrx
-    sensitivity = 13
+    sensitivity = 17
     threshold_exponential = 10 ** (-sensitivity)
     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)

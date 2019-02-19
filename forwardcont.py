@@ -88,6 +88,7 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         alphas = eps * np.ones((numsamples,timelength,numstates))
         log_prob_most_likely_seq = eps * np.ones((numsamples))
         logobservations = eps *  np.ones(numsamples)
+        print obsmtrx
         for sample in range(numsamples):
             phi0 =  np.ones(numstates)
             for state in range(numstates):
@@ -98,10 +99,20 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
             most_likely_seq[sample,0] = np.argmax(alphas[sample,0,:])
             for t in range(1,timelength):
                 phi_t = np.ones(numstates)
+                # print obsmtrx[feat,state,0]
                 for state in range(numstates):
+                    # print obsmtrx[feat,state,1]
                     for feat in range(numfeats):
                         distr = stats.norm(obsmtrx[feat,state,0], obsmtrx[feat,state,1])
                         phi_t[state] *= distr.pdf(observations[sample,feat,t])
+                        # print "mean is"
+                        # print obsmtrx[feat,state,0]
+                        # print "variance is"
+                        # print obsmtrx[feat,state,1]
+                        # print "probability is"
+                        # print distr.pdf(observations[sample,feat,t])
+                        # print observations[sample,feat,t]
+                        # print phi_t[state]
                 alphas[sample,t,:] = np.multiply(phi_t,np.matmul(np.transpose(transmtrx) , np.transpose(alphas[sample,t-1,:])))
                 most_likely_seq[sample,t] = np.argmax(alphas[sample,t,:])
             log_prob_most_likely_seq[sample] = np.sum(np.log(Zis[sample,:]) + 2.22044604925e-16 )
@@ -111,8 +122,8 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
             # print logobservations[sample]
             for time in range(timelength):
                 Zis[sample,time] = np.sum(alphas[sample,t,:])
+                # print alphas[sample,t,:]
                 alphas[sample,t,:] = normalize(alphas[sample,t,:].reshape(1, -1) ,norm = 'l1')
-
     return (alphas,log_prob_most_likely_seq,most_likely_seq,Zis,logobservations)
 
 
