@@ -84,24 +84,25 @@ class hmmgaussian(object):
                     prevstate = nextstate
             else:
                 self.observations = 2.22044604925e-16 *np.ones((self.numfeats,self.obserlength),dtype = numpy.int8)
-                self.seqofstates = 2.22044604925e-16 *np.ones((self.numfeats,self.obserlength))
+                self.seqofstates = 2.22044604925e-16 *np.ones((self.obserlength))
                 # available choices for states and setting the initial state based on pie
+                elements = range(self.numofstates)
+                initialstate = np.random.choice(elements, 1, p=self.pie)[0]
+                # available choices for observations
+                # setting first observation 
                 for feat in range(self.numfeats):
-                    elements = range(self.numofstates)
-                    initialstate = np.random.choice(elements, 1, p=self.pie)[0]
-                    # available choices for observations
-                    # setting first observation 
                     (self.observations)[feat,0] = np.random.normal((self.obsmtrx)[feat,initialstate,0],(self.obsmtrx)[feat,initialstate,1])
-                    prevstate = initialstate
-                    (self.seqofstates)[0] = initialstate
-                    for i in range(1,self.obserlength):
-                        # choosing next state based on the transition matrix
-                        elements = range(self.numofstates)
-                        nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
-                        # choosing next observation based on the new state
+                prevstate = initialstate
+                (self.seqofstates)[0] = initialstate
+                for i in range(1,self.obserlength):
+                    # choosing next state based on the transition matrix
+                    elements = range(self.numofstates)
+                    nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                    # choosing next observation based on the new state
+                    for feat in range(self.numfeats):
                         (self.observations)[feat,i] = np.random.normal((self.obsmtrx)[feat,nextstate,0],(self.obsmtrx)[feat,nextstate,1])
-                        (self.seqofstates)[feat,i] = (nextstate)
-                        prevstate = nextstate
+                    (self.seqofstates)[i] = (nextstate)
+                    prevstate = nextstate
         else:
             if self.numfeats == 1:
                 self.observations = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength),dtype = numpy.int8)
@@ -120,20 +121,21 @@ class hmmgaussian(object):
                         prevstate = nextstate
             else:
                 self.observations = 2.22044604925e-16 * np.ones((self.numsamples,self.numfeats,self.obserlength),dtype = numpy.int8)
-                self.seqofstates = 2.22044604925e-16 * np.ones((self.numsamples,self.numfeats,self.obserlength))
-                for feat in range(self.numfeats):
-                    for samnum in range(self.numsamples):
-                        elements = range(self.numofstates)
-                        initialstate = np.random.choice(elements, 1, p=self.pie)[0]
+                self.seqofstates = 2.22044604925e-16 * np.ones((self.numsamples,self.obserlength))
+                for samnum in range(self.numsamples):
+                    elements = range(self.numofstates)
+                    initialstate = np.random.choice(elements, 1, p=self.pie)[0]
+                    for feat in range(self.numfeats):
                         (self.observations)[samnum,feat,0] = np.random.normal((self.obsmtrx)[feat,initialstate,0],(self.obsmtrx)[feat,initialstate,1])
-                        prevstate = initialstate
-                        (self.seqofstates)[samnum,feat,0] = initialstate
-                        for i in range(1,self.obserlength):
-                            elements = range(self.numofstates)
-                            nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                    prevstate = initialstate
+                    (self.seqofstates)[samnum,0] = initialstate
+                    for i in range(1,self.obserlength):
+                        elements = range(self.numofstates)
+                        nextstate = np.random.choice(elements, 1, p=self.transitionmtrx[prevstate,:])[0]
+                        for feat in range(self.numfeats):
                             (self.observations)[samnum,feat,i] = np.random.normal((self.obsmtrx)[feat,nextstate,0],(self.obsmtrx)[feat,nextstate,1])
-                            (self.seqofstates)[samnum,feat,i] = (nextstate)
-                            prevstate = nextstate
+                        (self.seqofstates)[samnum,i] = (nextstate)
+                        prevstate = nextstate
                 
                 
         

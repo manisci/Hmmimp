@@ -25,26 +25,28 @@ def getseqofstatescont(numstates,numsamples,observations,exmodel):
     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
     (seq_states ,deltas)= viterbicont(transmtrx,obsmtrx,pie,observations)
     return (seq_states,deltas)
-def main():
-    numstates = 2
-    numsamples = 40
-    numbofobsrv = 10
-    exmodel = hmmgaussian(numstates,1,numbofobsrv,numsamples,True)
-    observations = exmodel.observations
-    (seqofstates,deltas) = getseqofstatescont(numstates,numsamples,observations,exmodel)
-    realseqofstates = exmodel.seqofstates
-    # print np.sum(seqofstates[0,:] == realseqofstates[0,:])
-    print "I got this much of the sequence right!"
-    NoCorstates = 0
-    if numsamples > 1:
-        for sample in range(numsamples):
-            NoCorstates += float(np.sum(seqofstates[sample,:] == realseqofstates[sample,:])) 
-    else:
-        NoCorstates += float(np.sum(seqofstates == realseqofstates))         
-    print float(NoCorstates) /float(numsamples * numbofobsrv)
-    # print deltas
-    # print np.shape(seqofstates)
-    # print np.shape(realseqofstates)
-    # print np.shape(deltas)
-    # print np.concatenate((seqofstates,realseqofstates,deltas),axis = 1)
-main()
+# def main():
+#     numstates = 2
+#     numsamples = 100
+#     numbofobsrv = 10
+#     exmodel = hmmgaussian(numstates,1,numbofobsrv,numsamples,2,True)
+#     observations = exmodel.observations
+#     (seqofstates,deltas) = getseqofstatescont(numstates,numsamples,observations,exmodel)
+#     realseqofstates = exmodel.seqofstates
+#     # print np.sum(seqofstates[0,:] == realseqofstates[0,:])
+#     print "I got this much of the sequence right!"
+#     print np.shape(realseqofstates)
+#     print np.shape(seqofstates)
+#     NoCorstates = 0
+#     if numsamples > 1:
+#         for sample in range(numsamples):
+#             NoCorstates += float(np.sum(seqofstates[sample,:] == realseqofstates[sample,:])) 
+#     else:
+#         NoCorstates += float(np.sum(seqofstates == realseqofstates))         
+#     print float(NoCorstates) /float(numsamples * numbofobsrv)
+#     # print deltas
+#     # print np.shape(seqofstates)
+#     # print np.shape(realseqofstates)
+#     # print np.shape(deltas)
+#     # print np.concatenate((seqofstates,realseqofstates,deltas),axis = 1)
+# main()

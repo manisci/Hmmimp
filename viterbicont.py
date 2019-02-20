@@ -98,7 +98,7 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
                     prob = 1.0
                     for feat in range(numfeats):
                         distr = stats.norm(obsmtrx[feat,j,0], obsmtrx[feat,j,1])
-                        prob *= distr.pdf(observations[sample,feat])
+                        prob *= distr.pdf(observations[sample,feat,t])
                     normed = normalize((deltas[sample,t-1,:] * transmtrx[:,j] * prob).reshape(1, -1),norm = 'l1')
                     # print normed
                     As[sample,t,j] = int(np.argmax(normed))
@@ -114,27 +114,29 @@ def viterbicont(transmtrx,obsmtrx,pie,observations):
     return (optzis,deltas)
 
 # def main():
-#     exmodel = hmmgaussian(3,1,50,3)
+#     exmodel = hmmgaussian(2,1,10,100,2,False)
 #     observations = exmodel.observations
 #     pie = exmodel.pie
 #     transmtrx = exmodel.transitionmtrx
 #     obsmtrx = exmodel.obsmtrx
 #     seqofstates = exmodel.seqofstates
 #     (gammas,betas,alphas,log_prob_most_likely_seq,most_likely_seq,forward_most_likely_seq,forward_log_prob_most_likely_seq,Ziis,logobservations) = forward_backwardcont(transmtrx,obsmtrx,pie,observations)
-#     print "forward_backward acc"
-#     print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
-#     print "forward acc"
-#     print np.sum(seqofstates==forward_most_likely_seq) / float(exmodel.obserlength)
-#     print "forward_backward prob"
-#     print log_prob_most_likely_seq
-#     print "forward prob"
-#     print forward_log_prob_most_likely_seq
+#     # print "forward_backward acc"
+#     # print np.sum(seqofstates==most_likely_seq) / float(exmodel.obserlength)
+#     # print "forward acc"
+#     # print np.sum(seqofstates==forward_most_likely_seq) / float(exmodel.obserlength)
+#     # print "forward_backward prob"
+#     # print log_prob_most_likely_seq
+#     # print "forward prob"
+#     # print forward_log_prob_most_likely_seq
 #     (mlpath,deltas) = viterbicont(transmtrx,obsmtrx,pie,observations)
+#     print mlpath
 #     print "forward_backward is more certain at each time point"
-#     # for i in range(exmodel.obserlength):
-#     #     if max(alphas[i,:]) <= max(gammas[i,:]):
-#     #         numwins +=1
-#     # print numwins / float(exmodel.obserlength)
+#     numwins = 0
+#     for i in range(exmodel.obserlength):
+#         if max(alphas[i,:]) <= max(gammas[i,:]):
+#             numwins +=1
+#     print numwins / float(exmodel.obserlength)
 
 #     # # print mlpath
 #     # print "viterbi similar to reality"

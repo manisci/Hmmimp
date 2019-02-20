@@ -88,7 +88,7 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
         alphas = eps * np.ones((numsamples,timelength,numstates))
         log_prob_most_likely_seq = eps * np.ones((numsamples))
         logobservations = eps *  np.ones(numsamples)
-        print obsmtrx
+        # print obsmtrx
         for sample in range(numsamples):
             phi0 =  np.ones(numstates)
             for state in range(numstates):

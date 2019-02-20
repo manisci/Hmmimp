@@ -565,7 +565,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1
     return (pie,transmtrx,obsmtrx) 
 
 def main():
-    exmodel = hmmgaussian(3,4,10,10,3, True)
+    exmodel = hmmgaussian(3,4,10,100,3, False)
     numstates = exmodel.numofstates
     observations = exmodel.observations
     # print "sequence of states is"
