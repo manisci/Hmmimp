@@ -82,14 +82,24 @@ def initialize_with_kmeans(observations,numstates,numsamples,exmodel):
             for obsidx in range(len(observations)):
                 vals[clusterpreds[obsidx]].append(flatobservations[obsidx])
             for state in range(numstates):
-                obsmtrx[feat,state,0] = np.mean(vals[state])
+                # print "should be zero"
+                # print np.sum(np.isnan(vals[state]))
+                # print vals[state]
                 if np.std(vals[state]) > 0.01:
                     obsmtrx[feat,state,1] = np.std(vals[state])
+                    obsmtrx[feat,state,0] = np.mean(vals[state])
                 else:
-                    # print "one of the states was not assigned any sample, and thus has zero variance, will run kmeans again"
-                    # main()
-                    # break
-                    raise ValueError("one of the states was not assigned any sample, and thus has zero variance, run the kmeans again")
+                    # print "one of the states was not assigned any sample, and thus has zero variance, will run kmeans again with one less state"
+                    # print "num state is now"
+                    # print numstates-1
+                    # print "obsmtrx is"
+                    # print obsmtrx[feat,state,:]
+                    print "doing one less state"
+                    print numstates-1
+                    return initialize_with_kmeans(observations,numstates-1,numsamples,exmodel)
+                    # (pie,transmtrx,obsmtrx,likelihood)  = Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1e-16 )
+                    break
+                    # raise ValueError("one of the states was not assigned any sample, and thus has zero variance, run the kmeans again")
 
 
     return (pie,transmtrx,obsmtrx)
@@ -562,44 +572,44 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1
         plt.plot(range(counter),np.mean(likelihoods,axis=1,dtype=np.float64))
     plt.savefig(title)
     
-    return (pie,transmtrx,obsmtrx) 
+    return (pie,transmtrx,obsmtrx,likelihoods[-1]) 
 
-def main():
-    exmodel = hmmgaussian(3,4,10,100,3, False)
-    numstates = exmodel.numofstates
-    observations = exmodel.observations
-    # print "sequence of states is"
-    # print exmodel.seqofstates
-    print "real mean is"
-    print np.mean(observations)
-    print "real std is"
-    print np.std(observations)
-    # hard = True
-    hard = False
-    print "realpie is "
-    print exmodel.pie
-    print "realtrans"
-    print exmodel.transitionmtrx
-    print "real obsmtrx"
-    print exmodel.obsmtrx
-    sensitivity = 17
-    threshold_exponential = 10 ** (-sensitivity)
-    (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
-    # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
-    piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
-    transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
-    # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
-    print "realpie is "
-    print exmodel.pie
-    print "estimated pie is"
-    print pie
-    print "realtrans"
-    print exmodel.transitionmtrx
-    print "estimated transition matrix is"
-    print transmtrx
-    print "real obsmtrx"
-    print exmodel.obsmtrx
-    print "estimated observation matrix is"
-    print obsmtrx
+# def main():
+#     exmodel = hmmgaussian(3,4,10,100,3, False)
+#     numstates = exmodel.numofstates
+#     observations = exmodel.observations
+#     # print "sequence of states is"
+#     # print exmodel.seqofstates
+#     print "real mean is"
+#     print np.mean(observations)
+#     print "real std is"
+#     print np.std(observations)
+#     # hard = True
+#     hard = False
+#     print "realpie is "
+#     print exmodel.pie
+#     print "realtrans"
+#     print exmodel.transitionmtrx
+#     print "real obsmtrx"
+#     print exmodel.obsmtrx
+#     sensitivity = 17
+#     threshold_exponential = 10 ** (-sensitivity)
+#     (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
+#     # (pie,transmtrx,obsmtrx) = clipvalues_prevunderflow_small(pie,transmtrx,obsmtrx)
+#     piedist = np.linalg.norm(pie - exmodel.pie ) / float(numstates)
+#     transdist = np.linalg.norm(transmtrx - exmodel.transitionmtrx) / float(numstates **2)
+#     # obsdist = np.linalg.norm(obsmtrx - exmodel.obsmtrx) / float( numstates)
+#     print "realpie is "
+#     print exmodel.pie
+#     print "estimated pie is"
+#     print pie
+#     print "realtrans"
+#     print exmodel.transitionmtrx
+#     print "estimated transition matrix is"
+#     print transmtrx
+#     print "real obsmtrx"
+#     print exmodel.obsmtrx
+#     print "estimated observation matrix is"
+#     print obsmtrx
 
-main()
+# main()

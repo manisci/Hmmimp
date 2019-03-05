@@ -8,7 +8,7 @@ from Baumwelchcont import Baumwelchcont
 from viterbicont import viterbicont
  
 
-def getseqofstatescont(numstates,numsamples,observations,exmodel):
+def getseqofstatescont(numstates,observations,exmodel):
     ''' returns most probable seq of states and probability of 
     being in each state for each timestep, as a second argument of size numtimesteps * numstates
     Input : numstates,numobscases,numsamples,observations,exmodel
@@ -22,9 +22,9 @@ def getseqofstatescont(numstates,numsamples,observations,exmodel):
     hard = False
     sensitivity = 10
     threshold_exponential = 10 ** (-sensitivity)
-    (pie,transmtrx,obsmtrx) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
+    (pie,transmtrx,obsmtrx,likelihood) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
     (seq_states ,deltas)= viterbicont(transmtrx,obsmtrx,pie,observations)
-    return (seq_states,deltas)
+    return (seq_states,deltas,likelihood)
 # def main():
 #     numstates = 2
 #     numsamples = 100
