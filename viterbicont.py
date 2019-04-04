@@ -6,7 +6,6 @@ from backwardcont import backwardcont
 from forward_backward_cont import forward_backwardcont
 from sklearn.preprocessing import normalize
 
-
 def viterbicont(transmtrx,obsmtrx,pie,observations):
     ''' Input : Transition matrix, pie, state_observation probs, observations
     Output : The most likely sequence of states (and also the probabilite for each time point) and its probabilite for the given observations

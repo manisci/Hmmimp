@@ -20,11 +20,11 @@ def getseqofstatescont(numstates,observations,exmodel):
     # print gammas
     # print most_likely_seq
     hard = False
-    sensitivity = 10
+    sensitivity = 5
     threshold_exponential = 10 ** (-sensitivity)
     (pie,transmtrx,obsmtrx,likelihood) = Baumwelchcont(observations,numstates,exmodel,hard,threshold_exponential)
     (seq_states ,deltas)= viterbicont(transmtrx,obsmtrx,pie,observations)
-    return (seq_states,deltas,likelihood)
+    return (seq_states,deltas,likelihood,pie,transmtrx,obsmtrx)
 # def main():
 #     numstates = 2
 #     numsamples = 100

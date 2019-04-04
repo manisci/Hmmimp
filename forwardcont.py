@@ -76,8 +76,8 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
             logobservations[sample] = np.sum(alphas[sample,timelength-1,:])
             # print logobservations[sample]
             for time in range(timelength):
-                Zis[sample,time] = np.sum(alphas[sample,t,:])
-                alphas[sample,t,:] = normalize(alphas[sample,t,:].reshape(1, -1) ,norm = 'l1')
+                Zis[sample,time] = np.sum(alphas[sample,time,:])
+                alphas[sample,time,:] = normalize(alphas[sample,time,:].reshape(1, -1) ,norm = 'l1')
     else:
         numsamples = np.shape(observations)[0]
         numstates = np.shape(transmtrx)[0]
@@ -121,9 +121,9 @@ def forwardcont(transmtrx,obsmtrx,pie,observations):
             logobservations[sample] = np.sum(alphas[sample,timelength-1,:])
             # print logobservations[sample]
             for time in range(timelength):
-                Zis[sample,time] = np.sum(alphas[sample,t,:])
+                Zis[sample,time] = np.sum(alphas[sample,time,:])
                 # print alphas[sample,t,:]
-                alphas[sample,t,:] = normalize(alphas[sample,t,:].reshape(1, -1) ,norm = 'l1')
+                alphas[sample,time,:] = normalize(alphas[sample,time,:].reshape(1, -1) ,norm = 'l1')
     return (alphas,log_prob_most_likely_seq,most_likely_seq,Zis,logobservations)
 
 
