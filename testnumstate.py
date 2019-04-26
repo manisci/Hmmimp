@@ -10,7 +10,10 @@ from Baumwelch import Baumwelch
 
 def generatedata():
     numsamples = 50
-    exmodel = hmmforward(2,5,1,50,500)
+    numstate = 8
+    numobsercase = 10
+    seqlenght = 50
+    exmodel = hmmforward(numstate,numobsercase,1,seqlenght,numsamples)
     observations = exmodel.observations
     pie = exmodel.pie
     halfstates = int(exmodel.numofstates) / 2
