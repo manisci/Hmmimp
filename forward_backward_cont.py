@@ -119,6 +119,10 @@ def forward_backwardcont(transmtrx,obsmtrx,pie,observations):
                 betas[sample,i,:] /= float(Ziis[sample,i])
         for sample in range(numsamples):
             for t in range(timelength):
+                # print "alphas"
+                # print alphas[sample,t,:]
+                # print "betas"
+                # print betas[sample,t,:]
                 gammas[sample,t,:] = normalize(np.multiply(alphas[sample,t,:],betas[sample,t,:]).reshape(1, -1),norm = 'l1')
                 most_likely_seq[sample,t] = np.argmax(gammas[sample,t,:])
             # (alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis) = clipvalues_prevunderflowfw(alphas[sample,:,:],betas[sample,:,:],gammas[sample,:,:],Ziis)

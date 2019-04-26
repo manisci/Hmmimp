@@ -485,8 +485,10 @@ def M_step(gammas,kissies,observations,hard = False):
                         for sample in range(numsamples):
                             varreprval += gammas[sample,time2,state] * (((observations[sample,feat,time2]) - meanak) ** 2)
                     newobsmtrx[feat,state,0] = meanreprval /float( np.sum(gammas[:,:,state]))
-                    newobsmtrx[feat,state,1] = np.sqrt(varreprval / np.sum(gammas[:,:,state]))
-                    if newobsmtrx[feat,state,1] == 0:
+                    newobsmtrx[feat,state,1] = np.sqrt(varreprval / np.sum(gammas[:,:,state])) + 0.1
+                    if newobsmtrx[feat,state,1] < eps:
+                        print "this is state"
+                        print state
                         raise ValueError("Too many states, either initialize again, or reduce the number of states by one")
         else:
             for feat in range(numfeats):
@@ -500,7 +502,7 @@ def M_step(gammas,kissies,observations,hard = False):
                 for state in range(numstate):
                     if len(assignments[state]) >= 1:
                         newobsmtrx[feat,state,0] = np.mean(assignments[state])
-                        newobsmtrx[feat,state,1] = np.sqrt(np.var(assignments[state]) )
+                        newobsmtrx[feat,state,1] = np.sqrt(np.var(assignments[state]) ) + 0.1
                     if newobsmtrx[feat,state,1] == 0:
                         raise ValueError("Too many states, either initialize again, or reduce the number of states by one")
 
@@ -545,7 +547,8 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1
         prevlogobservation = 2.0
     else:
         prevlogobservation = [2.0] * numsamples
-    while(diffprobproduct > conv_threshold):
+    numiters = 0
+    while(diffprobproduct > conv_threshold or numiters > 4):
         (gammas,kissies,logobservations) = E_step(pie,transmtrx,obsmtrx,observations)
         (pie,transmtrx,obsmtrx) = M_step(gammas,kissies,observations,hard)
         # print "pie is"
@@ -564,6 +567,7 @@ def Baumwelchcont(observations,numstates,exmodel,hard = False,conv_threshold = 1
         # print diffprobproduct
         prevlogobservation = logobservations
         print "did one iteration"
+        numiters +=1
     # print counter
     title = "likelihoodtrend.png"
     if numsamples ==1:

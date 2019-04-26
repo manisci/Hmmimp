@@ -56,8 +56,15 @@ def backwardcont(transmtrx,obsmtrx,pie,observations):
                 phi_t =  np.ones(numstates)
                 for state in range(numstates):
                     for feat in range(numfeats):
+                        # print "sth wrong with the variance or mean"
+                        # print "mean"
+                        # print obsmtrx[feat,state,0]
+                        # print "variance"
+                        # print obsmtrx[feat,state,1]
                         distr = stats.norm(obsmtrx[feat,state,0], obsmtrx[feat,state,1])
                         phi_t[state] *= distr.pdf(observations[sample,feat,t])
+                        # print "phi_t in backwardcont"
+                        # print phi_t[state]
                 betas[sample,t-1,:]= np.matmul(transmtrx,np.multiply(phi_t , (betas[sample,t,:])))
 
     return betas
