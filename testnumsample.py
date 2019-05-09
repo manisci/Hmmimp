@@ -56,6 +56,7 @@ import matplotlib.pyplot as plt
 #     varavgovlaptransmat = float(np.sum(diffovlaptransmat)) / float(nelemsmtrx * nruns)
 #     return (varavgordpii,varavgordpii,varavgordtransmat,varavgordtransmat)
 def generateobs(numsamples,pie,obsmtrx,obserlength,numofstates,numofobsercases,transitionmtrx):
+    # 800,pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx
     observations = 2.22044604925e-16 * np.ones((numsamples,obserlength),dtype = numpy.int8)
     seqofstates = 2.22044604925e-16 * np.ones((numsamples,obserlength))
     for samnum in range(numsamples):
@@ -107,27 +108,30 @@ def generatedata():
                                    [0.05,0.05,0.1,0.1,0.2,0.3,0.15,0.05],[0.1,0.2,0.3,0.15,0.05,0.05,0.05,0.1,],
                                    [0.1,0.2,0.05,0.05,0.1,0.3,0.15,0.05],[0.1,0.05,0.05,0.1,0.1,0.3,0.25,0.05],
                                    [0.1,0.2,0.05,0.1,0.15,0.05,0.1,0.25]])
-    numstatecases = [4,5,6,7,8,9,10,11,12,13,14,15,16]
+    numsamplecases = [200,400,600,800,1000,1200,1400,1600,1800,2000,2400,2600,2800,3000,3400,3600,4000]
     trainaccs = []
     testaccs = []
     naivecases = []
     naivetestaccs = []
-    numsamples = 1000
-    numtest = int(0.2 * numsamples)
     numstate = 8
     numobsercase = 10
     seqlenght = 20
-    (testobservations,testseqofstates) = generateobs(numtest,pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx)
+    (testobservations,testseqofstates) = generateobs(800,pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx)
     halfstates = int(numstate) / 2
     truestate2label = np.random.permutation(([0] * halfstates ) + [1] * (numstate - halfstates) )
-    testclasses = np.array([truestate2label[int(j)] for j in list(testseqofstates[:,-1])]) 
-    (trainobservations,trainseqofstates) = generateobs(numsamples,pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx)   
-    for case in numstatecases:
+    testclasses = np.array([truestate2label[int(j)] for j in list(testseqofstates[:,-1])])    
+    for i in range(len(numsamplecases)):
+        numsamples =numsamplecases[i]
         # this is dummy not really used 
-        supposednumstates = case
         exmodel = hmmforward(numstate,numobsercase,0.4,seqlenght,numsamples)
         
         # Fixing stuff to make sure models are comparable
+        if i == 0:
+            (trainobservations,trainseqofstates) = generateobs(numsamples,pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx)
+        else:
+            (extraobs,extraseq) = generateobs(numsamplecases[i]-numsamplecases[i-1],pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx)
+            trainobservations = np.concatenate((trainobservations,extraobs))
+            trainseqofstates = np.concatenate((trainseqofstates,extraseq))
         # pie = exmodel.pie
         # pie = np.array([0.5,0.5])
         # transmtrx = exmodel.transitionmtrx
@@ -137,6 +141,7 @@ def generatedata():
 
         # Training an HMM model to learn the sequence of states, and later using the majority class of samples who end up in each state as a mapping from that 
         # state to the labels.
+        supposednumstates = numstate
         # trainobservations = observations[:numtraining,:]
         # testobservations = observations[numtraining:,:]
         (learnedpie,learnedtransmtrx,learnedobsmtrx)  = Baumwelch(trainobservations,supposednumstates,numobsercase,numsamples,exmodel)
@@ -146,7 +151,6 @@ def generatedata():
         TestFinalState = list(testoptzis[:,-1])
         # Finding the mappings from supposed states to the labels
         estimatedstate2label = [0] * supposednumstates
-        statecounts = [0] * supposednumstates
         for state in range(supposednumstates):
             counts = [0,0]
             for i in range(numsamples):
@@ -162,7 +166,7 @@ def generatedata():
         # print estimatedstate2label
         # Reporting test and training accuracy
         trainpredclasses = np.array([estimatedstate2label[int(i)] for i in TrainFinalState])
-        testpredclasses = np.array([estimatedstate2label[int(i)] for i in TestFinalState])
+        testpredclasses = np.array([estimatedstate2label[int(j)] for j in TestFinalState])
         trainacc = float(np.sum(trainclasses == trainpredclasses ))/ float(len(trainclasses))
         testacc = float(np.sum(testclasses == testpredclasses ))/ float(len(testclasses))
         # print "training accuracy is"
@@ -185,21 +189,21 @@ def generatedata():
     print "naiveaccs"
     print naivecases
     plt.close()
-    plt.plot(numstatecases,trainaccs,'r',label = 'Training Accuracy')
-    plt.plot(numstatecases,testaccs,'b', label = 'Test Accuracy')
-    plt.plot(numstatecases,naivecases,'k',label = 'Majority Classifier Accuracy')
-    plt.xlabel("Number of States")
+    plt.plot(numsamplecases,trainaccs,'r',label = 'Training Accuracy')
+    plt.plot(numsamplecases,testaccs,'b', label = 'Test Accuracy')
+    plt.plot(numsamplecases,naivecases,'k',label = 'Majority Classifier Accuracy')
+    plt.xlabel("Number of Samples")
     plt.ylabel("Accuracy")
     plt.legend(loc='upper left')
     plt.show()
-    title1 = "AccvsNumstates" + ".png"
+    title1 = "AccvsNumsamples" + ".png"
     plt.savefig(title1)
     plt.close()
-    plt.plot(numstatecases,np.array(testaccs)-np.array(naivetestaccs),'g',label = 'Improvement over Majority classifier')
-    plt.xlabel("Number of States")
+    plt.plot(numsamplecases,np.array(testaccs)-np.array(naivetestaccs),'g',label = 'Improvement over Majority classifier')
+    plt.xlabel("Number of Samples")
     plt.ylabel("Improvement over Majority classifier")
     plt.legend(loc='upper left')
-    title1 = "DiffNumstates" + ".png"
+    title1 = "DiffNumsamples" + ".png"
     plt.savefig(title1)
     plt.close()
 
