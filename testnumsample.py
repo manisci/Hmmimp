@@ -8,53 +8,73 @@ from sklearn.preprocessing import normalize
 from viterbi import viterbi
 from Baumwelch import Baumwelch
 import matplotlib.pyplot as plt
+from scipy.optimize import linear_sum_assignment
 
 
-# def stabilityrep(resolution,icutype,wholefeat,los,ages,genders,urinedict,paticutypedictindex,listofalldicts,numofstates,over,model,nruns):
-#     '''
-#     Shows how much stable the model is given different initialization 
-#     '''
-#     ordtransmats = np.empty((nruns,numofstates,numofstates))
-#     ordemismats = np.empty((nruns,numofstates,numobsercases))
-#     ordpiis = np.empty((nruns,numofstates))
-#     ovlaptransmats = np.empty((nruns,numofstates,numofstates))
-#     ovlappiis = np.empty((nruns,numofstates))
-#     avgordtransmat = np.empty((numofstates,numofstates))
-#     avgovlaptransmat = np.empty((numofstates,numofstates))
-#     avgordpii = np.empty((1,numofstates))
-#     avgovlappii = np.empty((1,numofstates))
-#     nelemsmtrx = numofstates * numofstates
-#     for i in range(nruns):
-#         resolutions = [resolution] * 7
-#         (validpatientsindices,realfeatmtrxtrain1,realfeatmtrxtest1,KNNfeats,reallos1,inputHmmallVars,ovlapinputHmmallVars,trainindices,testindices) = generatetraintestsplit(listofalldicts,wholefeat,los,icutype,ages,genders,urinedict,paticutypedictindex,resolutions)
-#         dictindices= range(7)
-#         (ordscores,ordselalg,ordselcovartype,ovlapscores,ovlapselalg,ovlapselcovartype ,traininghmmfeats1,testhmmfeats1,ytrain1,ytest1,ordAvgVarPatches,ordVarRadiiPatchesmean,ordVarRadiiPatchesmedian,ovlapAvgVarPatches, \
-#         ovlapVarRadiiPatchesmean,ovlapVarRadiiPatchesmedian ,ordtransmat, ovlaptransmat , ordpii , ovlappii  ) = \
-#         learnhmm (validpatientsindices,KNNfeats,reallos1,inputHmmallVars,ovlapinputHmmallVars,trainindices,testindices,dictindices,resolution,numofstates,icutype,over,model)
-#         ordtransmats[i,:,:] = sortdiagonal(ordtransmat)
-#         ovlaptransmats[i,:,:] = sortdiagonal(ovlaptransmat)
-#         ordpiis[i,:] = sortdiagonal(ordpii)
-#         ovlappiis[i,:] = sortdiagonal(ovlappii)
-#     for i in range(numofstates):
-#         avgordpii = np.mean(ordpiis[:,i])
-#         avgovlappii = np.mean(ovlappiis[:,i])            
-#         for j in range(numofstates):
-#             avgordtransmat[i,j] = np.mean(ordtransmats[:,i,j])
-#             avgovlaptransmat[i,j] = np.mean(ovlaptransmats[:,i,j])
-#     diffordtransmat = np.empty((numofstates,numofstates))
-#     diffovlaptransmat = np.empty((numofstates,numofstates))
-#     diffordpii = np.empty((1,numofstates))
-#     diffovlappii = np.empty((1,numofstates))
-#     for i in range(nruns):
-#         diffordtransmat += np.absolute(ordtransmats[i,:,:] - avgordtransmat )
-#         diffovlaptransmat += np.absolute(ovlaptransmats[i,:,:] - avgovlaptransmat )
-#         diffordpii += np.absolute(ordpiis[i,:] - avgordpii )
-#         diffovlappii += np.absolute(ovlappiis[i,:] - avgovlappii )
-#     varavgordpii = float(np.sum(diffordpii)) / float(numofstates * nruns)
-#     varavgovlappii = float(np.sum(diffovlappii)) /  float(numofstates * nruns)
-#     varavgordtransmat = float(np.sum(diffordtransmat)) / float(nelemsmtrx * nruns)
-#     varavgovlaptransmat = float(np.sum(diffovlaptransmat)) / float(nelemsmtrx * nruns)
-#     return (varavgordpii,varavgordpii,varavgordtransmat,varavgordtransmat)
+def stabilityrep(ordpiis,ordtransmats,emisssmtrxs):
+    avgordtransmat = np.mean(ordtransmats, axis = 0)
+    avgordpii = np.mean(ordpiis, axis = 0)
+    avgemisssmtrx = np.mean(emisssmtrxs, axis = 0)
+    nruns = np.shape(ordpiis)[0]
+    numofstates = np.shape(ordpiis)[1]
+    numobsercase = np.shape(emisssmtrxs)[2]
+    # calculating the average matrices 
+    costmatrices = np.empty((nruns,nruns,numofstates,numofstates))
+    bestassignment = np.empty((nruns,nruns,numofstates))
+    flatbestassignment = np.empty((nruns*nruns,numofstates),dtype= int)
+    for i in range(nruns):
+        for j in range(nruns):
+            for k in range(numofstates):
+                for l in range(numofstates):
+                    costmatrices[i,j,k,l] = np.dot(ordtransmats[i,k,:],ordtransmats[j,l,:])
+            row,bestassignment[i,j,:] = linear_sum_assignment(costmatrices[i,j,:,:])
+            print bestassignment[i,j,:]
+    # finding the best assignment across all the pair
+    k= 0
+    for i in range(nruns):
+        for j in range(nruns):
+            flatbestassignment[k,:] = bestassignment[i,j,:]
+            k +=1
+        
+    print "you should be looking here"
+    print flatbestassignment
+            
+    diffordtransmat = np.empty((numofstates,numofstates))
+    diffordpii = np.empty((1,numofstates))
+    diffemissmtrx = np.empty((numofstates,numobsercase))
+    k = 0
+    for i in range(nruns):
+        for j in range(nruns):
+            diffordtransmat += np.absolute(ordtransmats[i,:,:] - ordtransmats[j,flatbestassignment[k],flatbestassignment[k]])
+            diffordpii += np.absolute(ordpiis[i,:] - ordpiis[j,flatbestassignment[k]])
+            diffemissmtrx += np.absolute(emisssmtrxs[i,:,:] - emisssmtrxs[j,flatbestassignment[k],:])
+            k += 1
+    diffordtransmat /= float(nruns*nruns)
+    diffordpii /= float(nruns*nruns)
+    diffemissmtrx /= float(nruns*nruns)
+    
+    print "difference in pie"
+    print diffordpii
+    print "difference in transition matrix"
+    print diffordtransmat
+    print "difference in emission matrix"
+    print diffemissmtrx
+    
+    print "mean of differences in pie "
+    print np.mean(diffordpii)
+    print "mean of differences in transitions "
+    print np.sum(diffordtransmat) / float(numofstates * numofstates)
+    print "mean of difference in emission matrix"
+    print np.sum(diffemissmtrx) / float(numofstates * numobsercase)
+    
+    # varavgordpii = float(np.sum(diffordpii)) / float(numofstates * nruns)
+    # varavgovlappii = float(np.sum(diffovlappii)) /  float(numofstates * nruns)
+    # varavgordtransmat = float(np.sum(diffordtransmat)) / float(nelemsmtrx * nruns)
+    # varavgovlaptransmat = float(np.sum(diffovlaptransmat)) / float(nelemsmtrx * nruns)
+
+    # print varavgordpii,varavgovlappii,varavgordtransmat,varavgovlaptransmat
+
+    # return (varavgordpii,varavgordpii,varavgordtransmat,varavgordtransmat)
 def generateobs(numsamples,pie,obsmtrx,obserlength,numofstates,numofobsercases,transitionmtrx):
     # 800,pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx
     observations = 2.22044604925e-16 * np.ones((numsamples,obserlength),dtype = numpy.int8)
@@ -109,12 +129,17 @@ def generatedata():
                                    [0.1,0.2,0.05,0.05,0.1,0.3,0.15,0.05],[0.1,0.05,0.05,0.1,0.1,0.3,0.25,0.05],
                                    [0.1,0.2,0.05,0.1,0.15,0.05,0.1,0.25]])
     numsamplecases = [200,400,600,800,1000,1200,1400,1600,1800,2000,2400,2600,2800,3000,3400,3600,4000]
+    
+    numstate = 8
+    numobsercase = 10
+    nruns = len(numsamplecases)
+    transmats = np.empty((nruns,numstate,numstate))
+    piis = np.empty((nruns,numstate))
+    emisssmtrxs = np.empty((nruns,numstate,numobsercase))
     trainaccs = []
     testaccs = []
     naivecases = []
     naivetestaccs = []
-    numstate = 8
-    numobsercase = 10
     seqlenght = 20
     (testobservations,testseqofstates) = generateobs(800,pie,obsmtrx,seqlenght,numstate,numobsercase,transmtrx)
     halfstates = int(numstate) / 2
@@ -137,7 +162,7 @@ def generatedata():
         # transmtrx = exmodel.transitionmtrx
         # obsmtrx = exmodel.obsmtrx
         # seqofstates = exmodel.seqofstates
-        trainclasses = np.array([truestate2label[int(i)] for i in list(trainseqofstates[:,-1])])
+        trainclasses = np.array([truestate2label[int(j)] for j in list(trainseqofstates[:,-1])])
 
         # Training an HMM model to learn the sequence of states, and later using the majority class of samples who end up in each state as a mapping from that 
         # state to the labels.
@@ -145,6 +170,9 @@ def generatedata():
         # trainobservations = observations[:numtraining,:]
         # testobservations = observations[numtraining:,:]
         (learnedpie,learnedtransmtrx,learnedobsmtrx)  = Baumwelch(trainobservations,supposednumstates,numobsercase,numsamples,exmodel)
+        piis[i,:] = learnedpie 
+        transmats[i,:,:] = learnedtransmtrx 
+        emisssmtrxs[i,:,:] = learnedobsmtrx 
         (trainoptzis,traindeltas) = viterbi(learnedtransmtrx,learnedobsmtrx,learnedpie,trainobservations)
         (testoptzis,testdeltas) = viterbi(learnedtransmtrx,learnedobsmtrx,learnedpie,testobservations)
         TrainFinalState = list(trainoptzis[:,-1])
@@ -206,5 +234,6 @@ def generatedata():
     title1 = "DiffNumsamples" + ".png"
     plt.savefig(title1)
     plt.close()
+    stabilityrep(piis,transmats,emisssmtrxs)
 
 generatedata()
